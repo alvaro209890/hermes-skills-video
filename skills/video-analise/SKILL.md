@@ -1,36 +1,27 @@
 ---
 name: video-analise
-description: "Analisa um vídeo (Reel, Short, TikTok, YouTube) — baixa, transcreve, extrai frames, enxerga o estilo — e devolve ANALISE.md com [mm:ss] no WhatsApp."
-tags: [video, analise, reels, shorts, tiktok, youtube, transcricao, keyframes, estilo]
-platforms: [linux]
-triggers:
-  - analisa esse video
-  - analisa esse reel
-  - olha esse reel
-  - que estilo é esse
-  - por que esse video foi bem
-  - extrai o roteiro desse video
-  - qualquer URL de youtube.com, youtu.be, instagram.com/reel, tiktok.com
-  - vídeo enviado como arquivo no chat
+description: "Analisa tecnicamente vídeos, Reels, Shorts, TikTok e YouTube: download seguro, ritmo de cortes, BPM, loudness e folha de contato com evidências temporais. Use em pedidos como analisa este vídeo/reel, que estilo é esse, por que funcionou, extrai o ritmo, ou quando chegar uma URL de referência com intenção explícita de análise."
 ---
 
 # video-analise
 
-> **📖 Referência completa: `~/Documentos/Planejamento_Skills_Video/PLANO_HERMES.md` (§0, §1.1–§1.6, §2, §5).**
-> Este SKILL.md é o mapa. O plano é a fonte de verdade — leia antes de executar o pipeline.
+> **📖 Arquitetura original: `~/Documentos/Planejamento_Skills_Video/PLANO_HERMES.md` (§0, §1.1–§1.6, §2, §5).**
+> Os estados/checklists antigos do plano são históricos; o estado executável abaixo prevalece.
 
-## 🚧 Estado: BASE (2026-08-09)
+## Estado: ANÁLISE TÉCNICA LOCAL VALIDADA (2026-08-10)
 
-Só a **base** está implementada. O pipeline completo é a fase seguinte.
+Download e medições locais funcionam sem bibliotecas pesadas. Transcrição semântica e visão
+automática continuam opcionais; nunca inventar essas camadas quando ausentes.
 
 | Peça | Estado |
 |---|---|
-| `scripts/doctor.sh` | ✅ funciona — diagnóstico do ambiente |
-| `scripts/baixar-video.sh` | ✅ funciona — download com os gotchas conhecidos |
-| transcrição, cortes, keyframes, `vision`, `ANALISE.md` | ⛔ **não implementado** — fase seguinte |
+| `scripts/doctor.sh` | ✅ diagnóstico por perfil; reconhece filtro Rubber Band do FFmpeg |
+| `scripts/baixar-video.sh` | ✅ argumentos seguros, slug confinado e URL normalizada |
+| `scripts/analisar-referencia.py` | ✅ cortes, plano mediano, BPM, LUFS/LRA/TP e contato |
+| transcrição e interpretação semântica por visão | ⚙️ só quando dependências/ferramentas estiverem disponíveis |
 
-**Não prometa análise completa ao Álvaro enquanto isto estiver aqui.** O que dá para
-fazer hoje: rodar o doctor e baixar o material.
+**Números não substituem inspeção.** Abra a folha de contato e escute um trecho antes de
+concluir sobre voz, composição, transição ou energia.
 
 ## O que a skill faz (quando pronta)
 
@@ -56,12 +47,12 @@ Detalhe passo a passo em **PLANO_HERMES.md §1.3**. Resumo:
 0. doctor          → scripts/doctor.sh          ✅ implementado
 1. ⏸️ confirmar     → clarify ("Analiso? ~4 min")
 2. aceite em segundos + enfileirar no kanban
-3. obter vídeo     → scripts/baixar-video.sh    ✅ implementado
+3. obter vídeo     → scripts/baixar-video.sh    ✅
                      (Instagram com login → tool `browser`; nunca "não consegui")
 4. áudio + faixas  → ffmpeg / Demucs            ⛔ fase seguinte
 5. transcrição     → faster-whisper (medium)    ⛔ fase seguinte
-6. cortes e ritmo  → PySceneDetect / librosa    ⛔ fase seguinte
-7. keyframes       → ffmpeg (~15)               ⛔ fase seguinte
+6. cortes e ritmo  → analisar-referencia.py (FFmpeg + NumPy) ✅
+7. keyframes       → contato_15.jpg via FFmpeg  ✅
 8. 👁️ ver os frames → tool `vision` (Groq llama-4-scout), lotes + cache   ⛔ fase seguinte
 9. mixagem         → loudnorm (LUFS, ducking)   ⛔ fase seguinte
 10. ANALISE.md + resumo ≤8 linhas + 2–3 keyframes por MEDIA:   ⛔ fase seguinte
@@ -77,6 +68,9 @@ scripts/doctor.sh [--curto|--json]
 
 scripts/baixar-video.sh <URL> [--slug s] [--cookies chrome] [--audio-so] [--dry-run]
 #   Baixa para ~/Documentos/Video_Studio/entradas/<slug>/{fonte.*, fonte.info.json}
+
+scripts/analisar-referencia.py video.mp4 pasta_saida [--segundos 35] [--scene-threshold 0.18]
+#   Gera ANALISE_TECNICA.md, contato_15.jpg, cortes_metadata.txt e áudio de medição.
 ```
 
 ## Restrições

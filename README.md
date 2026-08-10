@@ -7,9 +7,9 @@ O caso de ouro: *"vi um Reel no celular, mandei o link, o vídeo chegou pronto"*
 
 | Skill | O que faz |
 |---|---|
-| [`video-analise`](skills/video-analise/) | link ou vídeo → baixa, transcreve, extrai frames, **vê** os frames → `ANALISE.md` com `[mm:ss]` |
-| [`video-criacao`](skills/video-criacao/) | briefing → roteiro → cenas (`image_gen` + `zoompan`) → narração (edge TTS) → legendas → MP4 **9:16 e 16:9** |
-| [`video-dublagem`](skills/video-dublagem/) | troca o idioma preservando a trilha original e a sincronia (meta: desvio **≤150 ms**) |
+| [`video-analise`](skills/video-analise/) | download seguro + cortes/BPM/LUFS/true peak + contato de frames com evidências |
+| [`video-criacao`](skills/video-criacao/) | briefing → cenas/painéis → voz Edge processada → beat/legendas → MP4 9:16/16:9 validado |
+| [`video-dublagem`](skills/video-dublagem/) | encaixe Rubber Band ±10% e QA ≤150 ms; pipeline integral requer Demucs |
 
 As três compartilham um **protocolo de conversa no WhatsApp**: aceite em segundos, progresso por
 marco, no máximo **3 perguntas por vídeo**, entrega como anexo nativo. O protocolo está em
@@ -41,16 +41,19 @@ Construir os cinco juntos seria descobrir os mesmos erros cinco vezes.
 
 ---
 
-## 🚧 Estado atual: **BASE** (2026-08-10)
+## Estado atual: **PIPELINE LOCAL V3** (2026-08-10)
 
-Só a base está implementada. Isso é escopo, não pendência: o pipeline é a etapa seguinte.
+As três skills passaram no validador. Análise técnica e criação local estão operacionais; a
+dublagem já encaixa/valida segmentos, mas o fluxo integral continua bloqueado sem Demucs.
 
 | Peça | Estado |
 |---|---|
-| `scripts/doctor.sh` — diagnóstico do ambiente | ✅ funciona (3 modos), **executado** |
-| `scripts/baixar-video.sh` — download com os gotchas conhecidos | ✅ funciona, **download real validado** |
-| `SKILL.md` × 3 + 7 arquivos de `references/` | ✅ escritos |
-| transcrição, cortes, keyframes, visão, roteiro, TTS, render, dublagem | ⛔ **não implementado** |
+| Doctor por perfil (`analise`, `criacao`, `dublagem`) | ✅ filtro Rubber Band detectado corretamente |
+| Downloader | ✅ valores obrigatórios, slug confinado, URL normalizada, yt-dlp atual |
+| Análise técnica | ✅ cortes, BPM, LUFS/LRA/TP e folha de contato sem dependências pesadas |
+| Criação | ✅ voz rap, grade de beat, painéis, ASS, mix/master, H.264/AAC e QA |
+| Dublagem | ✅ encaixe por segmento; ⚙️ separação/remix dependem de Demucs |
+| Exemplo Gojo v3 | ✅ scripts/textos reproduzíveis; mídias protegidas excluídas |
 
 ### `doctor.sh`
 
@@ -58,27 +61,31 @@ Roda **antes** de prometer resultado — mesmo padrão do `imap doctor`. Separa 
 (**base**) do que só importa no pipeline completo, e **não instala nada**: reporta e sai.
 
 ```bash
-skills/video-analise/scripts/doctor.sh            # relatório completo
-skills/video-analise/scripts/doctor.sh --curto    # cabe numa mensagem de WhatsApp
-skills/video-analise/scripts/doctor.sh --json     # para consumo por script
+skills/video-analise/scripts/doctor.sh --perfil analise
+skills/video-criacao/scripts/doctor.sh --json
+skills/video-dublagem/scripts/doctor.sh --curto
 ```
 
-Verifica `ffmpeg` (filtros + VAAPI), `yt-dlp`, `faster-whisper`, `edge-tts`, `tesseract`,
-`Demucs`, `PySceneDetect`, `librosa`, `rubberband`, `piper`, runtimes, disco e a **presença**
-(nunca o valor) das chaves em `~/.hermes/.env`. Sai `1` se faltar algo da base.
+Verifica `ffmpeg` (incluindo filtro Rubber Band), `yt-dlp`, TTS, Demucs e dependências por
+perfil, além da **presença** — nunca o valor — das chaves em `~/.hermes/.env`.
 
 As skills `video-criacao` e `video-dublagem` têm um wrapper que chama o doctor canônico da
 `video-analise` — um diagnóstico só, sem lógica duplicada.
 
-### `baixar-video.sh`
+### Scripts principais
 
 ```bash
 skills/video-analise/scripts/baixar-video.sh <URL> [--slug s] [--cookies chrome] [--audio-so] [--dry-run]
+skills/video-analise/scripts/analisar-referencia.py video.mp4 analise/ --segundos 35
+skills/video-criacao/scripts/processar-voz-rap.sh linha.mp3 linha.wav -1.5 1.0
+skills/video-criacao/scripts/calcular-grade.py 95 30
+skills/video-criacao/scripts/validar-export.sh final.mp4
+skills/video-dublagem/scripts/encaixar-fala.sh fala.wav fala_fit.wav 2.850
 ```
 
-Baixa para `~/Documentos/Video_Studio/entradas/<slug>/` (`fonte.*` + `fonte.info.json` +
-`download.log`), normaliza a URL (`?igsh=`, `&list=`, `?si=`), deriva slug legível por plataforma
-(`ig-…`, `yt-…`, `tt-…`) e diagnostica a falha em vez de só devolver um código de erro.
+Os detalhes do preset vocal, grade RM RAPS e comandos exatos estão em
+[`rap-v3-modelos.md`](skills/video-criacao/references/rap-v3-modelos.md). O caso reproduzível,
+sem mídia protegida, está em [`examples/gojo-v3/`](examples/gojo-v3/).
 
 ---
 
@@ -102,6 +109,11 @@ Baixa para `~/Documentos/Video_Studio/entradas/<slug>/` (`fonte.*` + `fonte.info
 7. **Job longo tem que ser processo em background** (`gateway_timeout` 3600 s) que avisa por
    `hermes send --to whatsapp` — isso funciona fora do turno do agente.
 8. **`delegation`:** o paralelismo real é **3** (`max_concurrent_children`), não N.
+9. **TTS Edge costuma decodificar a 24 kHz.** Aplicar `asetrate=48000*fator` sem resample
+   encurta a fala drasticamente; usar `aresample=48000` + Rubber Band/formante.
+10. **AAC pode ultrapassar o WAV em vários dBTP.** Medir o MP4 decodificado e deixar margem.
+11. `--slug`/`--cookies` sem valor causavam loop, e `../` escapava de `entradas/`; ambos têm
+    testes de regressão e retornam código 2.
 
 ---
 
@@ -109,7 +121,8 @@ Baixa para `~/Documentos/Video_Studio/entradas/<slug>/` (`fonte.*` + `fonte.info
 
 Tomadas pelo Álvaro em 2026-08-09. Detalhe em [`planos/PLANO_HERMES.md` §7](planos/PLANO_HERMES.md).
 
-- **Custo zero.** Voz = **edge TTS** (`pt-BR-FranciscaNeural`). Sem ElevenLabs, sem API paga de voz.
+- **Custo zero.** Voz = Edge TTS. Rap BR começa por `en-US-AndrewMultilingualNeural` +15%,
+  Rubber Band −1,5 st; Francisca segue padrão de narração comum. Sem ElevenLabs/API paga.
 - **`image_gen` + `zoompan`** (Ken Burns) é o padrão de cena — resolve ~80 % do formato Reel e
   custa nada. `video_gen` não existe no toolset `whatsapp`.
 - **Job pesado roda local**, com o caminho preparado para priorizar a máquina mais potente da rede
@@ -137,9 +150,10 @@ uma pessoa.
 ```
 planos/            os 6 documentos de planejamento (README = fases/gate, PLANO_HERMES = Fase 1)
 skills/
-├── video-analise/    SKILL.md · scripts/{doctor,baixar-video}.sh · references/×3
-├── video-criacao/    SKILL.md · scripts/doctor.sh (wrapper)      · references/×4
-└── video-dublagem/   SKILL.md · scripts/doctor.sh (wrapper)      · references/×2
+├── video-analise/    doctor · downloader seguro · análise técnica · references
+├── video-criacao/    voz rap · animação · grade · validação · recipes
+└── video-dublagem/   doctor por perfil · encaixe/QA · sincronia
+examples/gojo-v3/     scripts e textos do caso validado, sem mídia protegida
 ```
 
 Sem segredos, sem credenciais: o `doctor.sh` verifica apenas a **presença** de variáveis de

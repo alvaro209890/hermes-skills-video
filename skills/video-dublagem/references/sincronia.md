@@ -15,7 +15,7 @@ entra se a anterior não bastou.
 |---|---|---|---|
 | 1 | **Tradução com restrição de comprimento** | o LLM (`deepseek-v4-pro`) recebe o nº de caracteres/sílabas alvo por segmento e devolve **3 variantes** (curta / média / longa) | é a camada mais barata — usar sempre |
 | 2 | **Absorção no silêncio** adjacente | encaixar o excedente nas pausas entre falas | só onde há silêncio real |
-| 3 | **Time-stretch preservando pitch** | `rubberband` | **±10 %**, nunca mais — passa disso e a voz soa robótica |
+| 3 | **Time-stretch preservando pitch/formante** | filtro `rubberband` do FFmpeg | **±10 %**, nunca mais — passa disso e a voz soa robótica |
 | 4 | **Nova tradução mais curta** | volta ao passo 1 com orçamento menor | |
 | 5 | **Marcar para revisão** | entra no relatório de QA como pior caso | não esconder |
 
@@ -32,6 +32,25 @@ pronto — desvio médio 90 ms, p95 160 ms, pior 210 ms em [00:14]
 
 Sempre: **média, p95 e pior caso com o timestamp**. O Hermes **não ouve** o resultado — o QA é
 numérico e a aprovação final é humana.
+
+## Comando executável
+
+O filtro do FFmpeg basta; não exigir por engano o binário `rubberband` separado:
+
+```bash
+scripts/encaixar-fala.sh fala_pt.wav fala_pt_fit.wav 2.850 0
+```
+
+Equivalente central:
+
+```bash
+ffmpeg -i fala.wav -af \
+  "aresample=48000,rubberband=tempo=1.06:pitch=1:formant=preserved:pitchq=quality,apad,atrim=0:2.850" \
+  -ar 48000 -c:a pcm_s24le fala_fit.wav
+```
+
+Se `duração_entrada / slot` sair de `0.90–1.10`, o script retorna código 3 e manda
+reescrever/ressintetizar. Não force um número maior só para “fechar”.
 
 ## O que preservar
 

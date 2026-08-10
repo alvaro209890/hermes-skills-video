@@ -5,9 +5,7 @@
 # roda ANTES de prometer resultado ao Álvaro (PLANO_HERMES.md §1.3 passo 0).
 #
 # Uso:
-#   ./doctor.sh              # relatório completo
-#   ./doctor.sh --curto      # só o resumo (cabe numa mensagem de WhatsApp)
-#   ./doctor.sh --json       # saída JSON para consumo por script
+#   ./doctor.sh [--curto|--json] [--perfil analise|criacao|dublagem]
 #
 # Saída:
 #   0 = tudo que a BASE precisa está presente (ffmpeg + yt-dlp utilizável)
@@ -17,12 +15,20 @@
 set -uo pipefail
 
 MODO="completo"
-case "${1:-}" in
-  --curto) MODO="curto" ;;
-  --json)  MODO="json" ;;
-  "")      ;;
-  *) echo "uso: $0 [--curto|--json]" >&2; exit 2 ;;
-esac
+PERFIL="analise"
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    --curto) MODO="curto"; shift ;;
+    --json) MODO="json"; shift ;;
+    --perfil)
+      [ "$#" -ge 2 ] || { echo "uso: $0 [--curto|--json] [--perfil analise|criacao|dublagem]" >&2; exit 2; }
+      PERFIL=$2
+      shift 2
+      ;;
+    *) echo "uso: $0 [--curto|--json] [--perfil analise|criacao|dublagem]" >&2; exit 2 ;;
+  esac
+done
+case "$PERFIL" in analise|criacao|dublagem) ;; *) echo "perfil inválido: $PERFIL" >&2; exit 2 ;; esac
 
 VENV_PY="$HOME/.hermes/hermes-agent/venv/bin/python3"
 [ -x "$VENV_PY" ] || VENV_PY="$(command -v python3 || true)"
@@ -36,8 +42,11 @@ add() { RES+=("$1|$2|$3|$4"); }
 
 ver_bin() { command -v "$1" >/dev/null 2>&1; }
 
+HAS_FFMPEG=0; HAS_FFPROBE=0; HAS_YTDLP=0; HAS_EDGE=0; HAS_RUBBERBAND=0; HAS_DEMUCS=0; HAS_NUMPY=0
+
 # --- ffmpeg / ffprobe
 if ver_bin ffmpeg; then
+  HAS_FFMPEG=1
   FFV=$(ffmpeg -version 2>/dev/null | head -1 | awk '{print $3}')
   # NOTA: capturar a lista UMA vez. `ffmpeg | grep -q` com `set -o pipefail` mata o
   # ffmpeg com SIGPIPE (141) e o teste dá falso-negativo silencioso.
@@ -54,8 +63,12 @@ if ver_bin ffmpeg; then
 else
   add ffmpeg base falta "ausente — hermes postinstall normalmente instala"
 fi
-ver_bin ffprobe && add ffprobe base ok "$(ffprobe -version 2>/dev/null | head -1 | awk '{print $3}')" \
-                || add ffprobe base falta "ausente"
+if ver_bin ffprobe; then
+  HAS_FFPROBE=1
+  add ffprobe base ok "$(ffprobe -version 2>/dev/null | head -1 | awk '{print $3}')"
+else
+  add ffprobe base falta "ausente"
+fi
 
 # --- yt-dlp (gotcha nº 1 do README §3.4: o do apt está quebrado para YouTube)
 YTDLP_BIN=""
@@ -66,6 +79,7 @@ if [ -n "$YTDLP_BIN" ]; then
   YTV=$("$YTDLP_BIN" --version 2>/dev/null | head -1)
   YTANO=${YTV%%.*}
   if [ "${YTANO:-0}" -ge 2025 ] 2>/dev/null; then
+    HAS_YTDLP=1
     add yt-dlp base ok "$YTV ($YTDLP_BIN)"
   else
     add yt-dlp base aviso "$YTV ($YTDLP_BIN) — versão do apt, QUEBRADA para YouTube ('Requested format is not available'). Substituir por: uv tool install yt-dlp"
@@ -75,6 +89,12 @@ else
 fi
 
 # --- transcrição
+if [ -n "$VENV_PY" ] && "$VENV_PY" -c 'import numpy' 2>/dev/null; then
+  HAS_NUMPY=1
+  add numpy base ok "módulo disponível em $VENV_PY"
+else
+  add numpy base falta "necessário para analisar BPM/onsets"
+fi
 if [ -n "$VENV_PY" ] && "$VENV_PY" -c 'import faster_whisper' 2>/dev/null; then
   add faster-whisper fase2 ok "módulo python disponível em $VENV_PY"
 else
@@ -89,6 +109,7 @@ for cand in "$HOME/.hermes/hermes-agent/venv/bin/edge-tts" "$(command -v edge-tt
   [ -n "$cand" ] && [ -x "$cand" ] && { EDGE_BIN="$cand"; break; }
 done
 if [ -n "$EDGE_BIN" ]; then
+  HAS_EDGE=1
   add edge-tts base ok "$EDGE_BIN"
 else
   add edge-tts base falta "ausente — é o motor de voz padrão (sem custo)"
@@ -106,13 +127,21 @@ fi
 # --- resto do pipeline (fase seguinte, só inventário)
 for mod in demucs scenedetect librosa; do
   if [ -n "$VENV_PY" ] && "$VENV_PY" -c "import $mod" 2>/dev/null; then
+    [ "$mod" = demucs ] && HAS_DEMUCS=1
     add "$mod" fase2 ok "módulo python disponível"
   else
     add "$mod" fase2 falta "não instalado"
   fi
 done
-ver_bin rubberband && add rubberband fase2 ok "$(command -v rubberband)" \
-                   || add rubberband fase2 falta "ausente — time-stretch da dublagem"
+if [ "${LISTA_FILTROS:-}" ] && grep -qw -- rubberband <<<"$LISTA_FILTROS"; then
+  HAS_RUBBERBAND=1
+  add rubberband fase2 ok "filtro FFmpeg disponível (tempo/pitch + formante preservado)"
+elif ver_bin rubberband; then
+  HAS_RUBBERBAND=1
+  add rubberband fase2 ok "CLI disponível: $(command -v rubberband)"
+else
+  add rubberband fase2 falta "nem filtro FFmpeg nem CLI disponíveis"
+fi
 
 # --- runtimes
 [ -n "$VENV_PY" ] && add python3 base ok "$("$VENV_PY" --version 2>&1 | awk '{print $2}') ($VENV_PY)" \
@@ -163,9 +192,30 @@ for l in "${RES[@]}"; do
   [ "$est" = aviso ] && n_aviso=$((n_aviso+1))
 done
 
+FALTANDO_PERFIL=()
+[ "$HAS_FFMPEG" -eq 1 ] || FALTANDO_PERFIL+=(ffmpeg)
+[ "$HAS_FFPROBE" -eq 1 ] || FALTANDO_PERFIL+=(ffprobe)
+case "$PERFIL" in
+  analise)
+    [ "$HAS_YTDLP" -eq 1 ] || FALTANDO_PERFIL+=(yt-dlp-atual)
+    [ "$HAS_NUMPY" -eq 1 ] || FALTANDO_PERFIL+=(numpy)
+    ;;
+  criacao)
+    [ "$HAS_EDGE" -eq 1 ] || FALTANDO_PERFIL+=(edge-tts)
+    [ "$HAS_RUBBERBAND" -eq 1 ] || FALTANDO_PERFIL+=(rubberband)
+    ;;
+  dublagem)
+    [ "$HAS_EDGE" -eq 1 ] || FALTANDO_PERFIL+=(edge-tts)
+    [ "$HAS_RUBBERBAND" -eq 1 ] || FALTANDO_PERFIL+=(rubberband)
+    [ "$HAS_DEMUCS" -eq 1 ] || FALTANDO_PERFIL+=(demucs)
+    ;;
+esac
+PERFIL_OK=false
+[ "${#FALTANDO_PERFIL[@]}" -eq 0 ] && PERFIL_OK=true
+
 if [ "$MODO" = json ]; then
-  printf '{\n  "base_ok": %s,\n  "faltando_base": %d,\n  "avisos": %d,\n  "faltando_fase2": %d,\n  "itens": [\n' \
-    "$([ $n_falta_base -eq 0 ] && echo true || echo false)" "$n_falta_base" "$n_aviso" "$n_falta_f2"
+  printf '{\n  "perfil": "%s",\n  "perfil_ok": %s,\n  "faltando_perfil": %d,\n  "base_ok": %s,\n  "faltando_base": %d,\n  "avisos": %d,\n  "faltando_fase2": %d,\n  "itens": [\n' \
+    "$PERFIL" "$PERFIL_OK" "${#FALTANDO_PERFIL[@]}" "$([ $n_falta_base -eq 0 ] && echo true || echo false)" "$n_falta_base" "$n_aviso" "$n_falta_f2"
   primeiro=1
   for l in "${RES[@]}"; do
     IFS='|' read -r k niv est det <<<"$l"
@@ -174,13 +224,13 @@ if [ "$MODO" = json ]; then
     printf '    {"item": "%s", "nivel": "%s", "estado": "%s", "detalhe": "%s"}' "$k" "$niv" "$est" "$det_esc"
   done
   printf '\n  ]\n}\n'
-  [ $n_falta_base -eq 0 ] && exit 0 || exit 1
+  [ "$PERFIL_OK" = true ] && exit 0 || exit 1
 fi
 
 icone() { case "$1" in ok) printf '✅';; aviso) printf '⚠️ ';; falta) printf '❌';; esac; }
 
 if [ "$MODO" = completo ]; then
-  echo "🩺 doctor — skills de vídeo do Hermes ($(date '+%Y-%m-%d %H:%M'))"
+  echo "🩺 doctor — skills de vídeo do Hermes · perfil $PERFIL ($(date '+%Y-%m-%d %H:%M'))"
   echo
   echo "── BASE (precisa estar de pé agora) ──"
   for l in "${RES[@]}"; do
@@ -196,11 +246,11 @@ if [ "$MODO" = completo ]; then
   echo
 fi
 
-if [ $n_falta_base -eq 0 ]; then
-  echo "Resumo: base OK · ${n_aviso} aviso(s) · ${n_falta_f2} item(ns) do pipeline completo ainda não instalado(s)."
+if [ "$PERFIL_OK" = true ]; then
+  echo "Resumo: perfil $PERFIL OK · ${n_aviso} aviso(s) · ${n_falta_f2} item(ns) opcionais/avançados ausentes."
   exit 0
 else
-  echo "Resumo: ❌ ${n_falta_base} item(ns) ESSENCIAL(is) faltando · ${n_aviso} aviso(s)."
-  echo "Diga isso ao Álvaro ANTES de prometer resultado. Este script não instala nada."
+  echo "Resumo: ❌ perfil $PERFIL bloqueado por: ${FALTANDO_PERFIL[*]}"
+  echo "Este script não instala nada."
   exit 1
 fi

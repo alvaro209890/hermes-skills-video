@@ -2,8 +2,14 @@
 
 **Princípio:** 🔒 **autonomia total.** O Hermes executa o pipeline inteiro — download, transcrição, extração de frames, **análise visual com a própria ferramenta de visão**, roteiro, geração de cenas, narração, edição, exportação e dublagem — **sozinho**, e entrega no WhatsApp. **Zero roteamento para outro agente.** Quando precisa paralelizar, usa **subagentes internos** dele mesmo (`delegation` / `moa`).
 **Canal:** ⭐ **WhatsApp** (também Discord e web chat). É por lá que a skill opera, recebe ordens e entrega resultado.
-**Status:** planejamento. Nada implementado.
+**Status (atualizado em 2026-08-10):** planejamento original + execução local parcial validada.
 📖 Contexto comum: [`README.md`](README.md).
+
+> **Estado executável:** `video-analise` já mede cortes/BPM/LUFS e gera contato;
+> `video-criacao` entregou o Gojo v3 completo e validado; `video-dublagem` já encaixa segmentos
+> com Rubber Band/QA, mas a separação/remix integral continua bloqueada sem Demucs. A operação
+> ponta a ponta pelo WhatsApp e a aprovação humana dos três eixos ainda não ocorreram; o gate
+> continua aberto. Os checkboxes abaixo preservam o plano original e não anulam esse estado.
 
 ---
 

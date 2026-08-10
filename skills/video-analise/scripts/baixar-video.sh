@@ -25,8 +25,12 @@ set -uo pipefail
 URL=""; SLUG=""; COOKIES=""; AUDIO_SO=0; DRYRUN=0
 while [ $# -gt 0 ]; do
   case "$1" in
-    --slug)    SLUG="${2:-}"; shift 2 ;;
-    --cookies) COOKIES="${2:-}"; shift 2 ;;
+    --slug)
+      [ "$#" -ge 2 ] && [ -n "$2" ] && [[ "$2" != -* ]] || { echo "❌ --slug exige valor" >&2; exit 2; }
+      SLUG=$2; shift 2 ;;
+    --cookies)
+      [ "$#" -ge 2 ] && [ -n "$2" ] && [[ "$2" != -* ]] || { echo "❌ --cookies exige valor" >&2; exit 2; }
+      COOKIES=$2; shift 2 ;;
     --audio-so) AUDIO_SO=1; shift ;;
     --dry-run) DRYRUN=1; shift ;;
     -h|--help) sed -n '2,25p' "$0"; exit 0 ;;
@@ -39,7 +43,15 @@ done
 # ---- normalizar URL ---------------------------------------------------------
 # Instagram cola ?igsh=…; YouTube cola ?si=…&list=… — lixo que polui o slug e
 # às vezes muda o alvo do download (list= baixa a playlist inteira).
-URL_LIMPA=$(sed -E 's/[?&](igsh|igshid|si|feature|list|index|pp|utm_[a-z_]+)=[^&]*//g; s/\?&/?/; s/[?&]$//' <<<"$URL")
+URL_LIMPA=$(python3 -c '
+import sys
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
+u = urlsplit(sys.argv[1])
+drop = {"igsh", "igshid", "si", "feature", "list", "index", "pp"}
+q = [(k, v) for k, v in parse_qsl(u.query, keep_blank_values=True)
+     if k not in drop and not k.startswith("utm_")]
+print(urlunsplit((u.scheme, u.netloc, u.path, urlencode(q), u.fragment)))
+' "$URL") || { echo "❌ URL inválida" >&2; exit 2; }
 [ "$URL_LIMPA" != "$URL" ] && echo "🧹 URL normalizada: $URL_LIMPA"
 
 # ---- escolher o yt-dlp ------------------------------------------------------
@@ -94,6 +106,12 @@ if [ -z "$SLUG" ]; then
   SLUG=$(tr '[:upper:]' '[:lower:]' <<<"$SLUG")
 fi
 [ -n "$SLUG" ] || SLUG="video-$(date +%Y%m%d-%H%M%S)"
+case "$SLUG" in *..*|*/*|*\\*) echo "❌ slug inseguro: $SLUG" >&2; exit 2 ;; esac
+[[ "$SLUG" =~ ^[a-zA-Z0-9][a-zA-Z0-9._-]{0,79}$ ]] || {
+  echo "❌ slug inválido; use 1–80 caracteres [a-zA-Z0-9._-]" >&2
+  exit 2
+}
+case "$COOKIES" in ""|chrome|chromium|firefox|brave) ;; *) echo "❌ navegador de cookies inválido: $COOKIES" >&2; exit 2 ;; esac
 DEST="$HOME/Documentos/Video_Studio/entradas/$SLUG"
 
 # ---- montar o comando -------------------------------------------------------

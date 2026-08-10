@@ -1,10 +1,12 @@
 # Planejamento — Skills de Criação e Análise de Vídeo (Reels / Shorts / YouTube)
 
-**Data:** 2026-08-09 · atualizado 2026-08-09 (princípio de autonomia)
+**Data:** 2026-08-09 · atualizado 2026-08-10 (execução local v3)
 **Autor:** planejamento gerado para o Álvaro
-**Status:** 📋 SOMENTE PLANEJAMENTO — nenhum código foi escrito, nenhuma dependência foi instalada, nenhum script foi criado.
+**Status:** plano original com execução local parcial: análise técnica e criação v3 validadas;
+encaixe de dublagem validado, pipeline integral/WhatsApp ainda pendente.
 
-> Os blocos de comando neste conjunto de documentos são **ilustrativos** (especificação de como a skill deverá funcionar). Eles não foram executados nem salvos como scripts. A única coisa executada durante o planejamento foi a leitura de metadados públicos dos vídeos de referência e o inventário do ambiente local.
+> Os blocos históricos continuam ilustrativos. O código executável atual fica em `skills/` e o
+> caso testado em `examples/gojo-v3/`; o gate humano da Fase 1 permanece aberto.
 
 ---
 

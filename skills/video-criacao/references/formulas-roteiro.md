@@ -34,6 +34,11 @@ A skill deve espelhar isso com **pontos de entrada humanos**, não tentar substi
 Reproduzir a etapa vocal com TTS de texto **vai soar diferente** — é conversão de timbre
 (RVC-like), não TTS. Avisar o Álvaro em vez de entregar algo que soa errado.
 
+Quando o custo zero obrigar edge-tts, não entregar a voz crua: começar pelo Andrew Multilingual
+em tomadas por linha, `+15%`, Rubber Band −1,5 st com formante preservado, EQ/compressor/softclip
+e double discreto. Isso aproxima peso e presença, mas não substitui interpretação humana. Ouvir o
+preview isolado e na mix; rejeitar tomada que exija mais de 15% de ajuste temporal.
+
 ## Métrica que importa
 
 3,08 M × 14,7 k views com a **mesma** fórmula: o teto **não vem do pipeline técnico**, vem do

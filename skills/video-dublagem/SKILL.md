@@ -1,32 +1,26 @@
 ---
 name: video-dublagem
-description: "Dubla um vídeo para outro idioma preservando a trilha original e a sincronia (desvio alvo ≤150 ms), entregando no WhatsApp."
-tags: [video, dublagem, traducao, tts, demucs, sincronia, legendas]
-platforms: [linux]
-triggers:
-  - dubla isso pra ingles
-  - dubla pra espanhol
-  - poe em portugues
-  - quero esse reel em 3 idiomas
-  - vídeo em idioma estrangeiro chegando no chat (oferecer dublagem)
+description: "Dubla vídeo para outro idioma preservando trilha e sincronia, com TTS gratuito, encaixe Rubber Band limitado a ±10% e QA de desvio alvo ≤150 ms. Use em pedidos como dubla para inglês/espanhol/português, põe em português ou quero este reel em vários idiomas."
 ---
 
 # video-dublagem
 
-> **📖 Referência completa: `~/Documentos/Planejamento_Skills_Video/PLANO_HERMES.md` (§3.1–§3.6, §2 protocolo, §5 gotchas).**
-> Este SKILL.md é o mapa. O plano é a fonte de verdade.
+> **📖 Arquitetura original: `~/Documentos/Planejamento_Skills_Video/PLANO_HERMES.md` (§3.1–§3.6, §2 protocolo, §5 gotchas).**
+> Os estados/checklists antigos do plano são históricos; o estado executável abaixo prevalece.
 
-## 🚧 Estado: BASE (2026-08-09)
+## Estado: ENCAIXE LOCAL IMPLEMENTADO; SEPARAÇÃO AINDA DEPENDE DE DEMUCS (2026-08-10)
 
-Só a **base** está implementada. Nenhuma etapa de dublagem existe ainda.
+O encaixe e o QA por segmento funcionam. Neste PC, a dublagem integral ainda deve ser
+bloqueada pelo doctor quando Demucs estiver ausente.
 
 | Peça | Estado |
 |---|---|
-| `scripts/doctor.sh` | ✅ funciona (wrapper do doctor canônico da `video-analise`) |
-| Demucs, tradução com restrição, TTS, encaixe, remix, QA | ⛔ **não implementado** — fase seguinte |
+| `scripts/doctor.sh` | ✅ valida especificamente o perfil dublagem |
+| `scripts/encaixar-fala.sh` | ✅ Rubber Band/formante, ±10%, slot exato e `.qa.json` |
+| Demucs, transcrição, tradução e remix integral | ⚙️ pendente conforme dependências |
 
-⚠️ O doctor já reporta que **`Demucs` e `rubberband` não estão instalados** — as duas peças
-centrais desta skill. Diga isso **antes** de aceitar um pedido de dublagem.
+O doctor reconhece corretamente o **filtro** Rubber Band do FFmpeg; não exige o binário
+homônimo. Demucs continua obrigatório para preservar trilha de um vídeo já mixado.
 
 ## O que a skill faz (quando pronta)
 
@@ -69,6 +63,9 @@ resolve nas três camadas na ordem acima — tradução curta primeiro, time-str
 ```bash
 scripts/doctor.sh [--curto|--json]
 #   Wrapper — chama o doctor canônico em ../video-analise/scripts/doctor.sh
+
+scripts/encaixar-fala.sh entrada.wav saida.wav slot_segundos [semitons=0]
+#   Sai 3 se o tempo necessário passar de ±10%; gera saida.qa.json.
 ```
 
 Para obter o material, use `../video-analise/scripts/baixar-video.sh`.

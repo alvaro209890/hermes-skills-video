@@ -1,0 +1,31 @@
+[Script Info]
+ScriptType: v4.00+
+PlayResX: 1080
+PlayResY: 1920
+WrapStyle: 2
+ScaledBorderAndShadow: yes
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: RapBlue,DejaVu Sans,52,&H00FFFFFF,&H00FFF060,&H00120B18,&H68000000,-1,0,0,0,100,100,1,0,1,4,2,2,92,92,500,1
+Style: RapPurple,DejaVu Sans,52,&H00FFFFFF,&H00F69AF2,&H00120B18,&H68000000,-1,0,0,0,100,100,1,0,1,4,2,2,92,92,500,1
+Style: Impact,DejaVu Sans,94,&H00FFFFFF,&H00FFFFFF,&H008625D0,&H30000000,-1,0,0,0,100,100,2,0,1,6,3,5,70,70,0,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Dialogue: 1,0:00:02.53,0:00:05.53,RapBlue,,0,0,0,,{\fad(60,90)\blur0.25}{\kf31}SEIS {\kf38}OLHOS {\kf54}ABERTOS, {\kf69}EU\NENXERGO {\kf15}O {\kf23}QUE {\kf54}NINGUÉM {\kf16}VÊ
+Dialogue: 0,0:00:02.53,0:00:03.25,Impact,,0,0,0,,{\an5\pos(540,820)\c&H00FFF060&\fscx118\fscy118\t(0,260,\fscx100\fscy100)\fad(40,120)}SEIS OLHOS
+Dialogue: 1,0:00:05.68,0:00:08.68,RapBlue,,0,0,0,,{\fad(60,90)\blur0.25}{\kf13}O {\kf52}INFINITO {\kf13}NA {\kf33}MINHA {\kf59}FRENTE:\NCÊ {\kf33}CHEGA, {\kf20}MAS {\kf20}NÃO {\kf13}ME {\kf44}ALCANÇA
+Dialogue: 0,0:00:05.68,0:00:06.40,Impact,,0,0,0,,{\an5\pos(540,820)\c&H00FFF060&\fscx118\fscy118\t(0,260,\fscx100\fscy100)\fad(40,120)}INFINITO
+Dialogue: 1,0:00:08.84,0:00:11.84,RapBlue,,0,0,0,,{\fad(60,90)\blur0.25}{\kf34}ROXO {\kf43}VAZIO {\kf17}NA {\kf86}PALMA,\NMAIS {\kf17}E {\kf43}MENOS {\kf60}COLIDEM
+Dialogue: 0,0:00:08.84,0:00:09.56,Impact,,0,0,0,,{\an5\pos(540,820)\c&H00FFF060&\fscx118\fscy118\t(0,260,\fscx100\fscy100)\fad(40,120)}ROXO VAZIO
+Dialogue: 1,0:00:12.00,0:00:15.00,RapBlue,,0,0,0,,{\fad(60,90)\blur0.25}{\kf14}E {\kf14}O {\kf56}SILÊNCIO {\kf42}DEPOIS {\kf63}DO\NESTOURO {\kf14}É {\kf14}A {\kf35}ÚNICA {\kf48}HERANÇA
+Dialogue: 0,0:00:12.00,0:00:12.72,Impact,,0,0,0,,{\an5\pos(540,820)\c&H00FFF060&\fscx118\fscy118\t(0,260,\fscx100\fscy100)\fad(40,120)}SILÊNCIO
+Dialogue: 1,0:00:15.16,0:00:18.16,RapPurple,,0,0,0,,{\fad(60,90)\blur0.25}{\kf16}EU {\kf24}SOU {\kf16}O {\kf32}MAIS {\kf41}FORTE. {\kf32}NÃO\NÉ {\kf57}VAIDADE, {\kf16}É {\kf66}SENTENÇA
+Dialogue: 0,0:00:15.16,0:00:15.88,Impact,,0,0,0,,{\an5\pos(540,820)\c&H00F69AF2&\fscx118\fscy118\t(0,260,\fscx100\fscy100)\fad(40,120)}MAIS FORTE
+Dialogue: 1,0:00:18.32,0:00:21.32,RapPurple,,0,0,0,,{\fad(60,90)\blur0.25}{\kf54}SOZINHO {\kf15}NO {\kf31}TOPO, {\kf54}PORQUE\NO {\kf31}TOPO {\kf23}NÃO {\kf23}TEM {\kf69}COMPANHIA
+Dialogue: 0,0:00:18.32,0:00:19.04,Impact,,0,0,0,,{\an5\pos(540,820)\c&H00F69AF2&\fscx118\fscy118\t(0,260,\fscx100\fscy100)\fad(40,120)}SOZINHO NO TOPO
+Dialogue: 1,0:00:21.47,0:00:24.47,RapPurple,,0,0,0,,{\fad(60,90)\blur0.25}{\kf38}GOJO {\kf56}SATORU: {\kf19}O {\kf103}LIMITE\NVIROU {\kf84}LEMBRANÇA
+Dialogue: 0,0:00:21.47,0:00:22.19,Impact,,0,0,0,,{\an5\pos(540,820)\c&H00F69AF2&\fscx118\fscy118\t(0,260,\fscx100\fscy100)\fad(40,120)}GOJO SATORU
+Dialogue: 1,0:00:24.63,0:00:27.63,RapPurple,,0,0,0,,{\fad(60,90)\blur0.25}{\kf45}ACIMA {\kf18}DO {\kf118}INFINITO\NAINDA {\kf36}CABE {\kf36}MAIS {\kf18}UM {\kf29}DIA
+Dialogue: 0,0:00:24.63,0:00:25.35,Impact,,0,0,0,,{\an5\pos(540,820)\c&H00F69AF2&\fscx118\fscy118\t(0,260,\fscx100\fscy100)\fad(40,120)}ACIMA DO INFINITO

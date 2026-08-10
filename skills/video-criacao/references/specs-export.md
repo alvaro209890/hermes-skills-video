@@ -25,7 +25,10 @@ dentro da safe area? texto legível sobre o fundo?
 
 ## Áudio
 
-−14 LUFS integrado, pico −1 dBTP. `loudnorm` em **2 passes**.
+- Narração/conteúdo geral: −14 LUFS-I.
+- Música curta/rap: −13 a −11 LUFS-I, LRA 1,5–4 LU.
+- Em ambos: **AAC final decodificado ≤−1 dBTP**. `loudnorm` em dois passes e nova
+  medição depois do encode; o AAC nativo pode criar picos interamostra que não existem no WAV.
 
 ## Encode nesta máquina
 
