@@ -88,6 +88,40 @@ cobrindo o botão, ele para e explica. Isso não é bug para contornar.
 
 ---
 
+
+## Regra 00c — a prévia de faixa não publicada *(02/09/2026)*
+
+A **Regra 0** (longo primeiro, cortes 2–4 h depois) vale para **corte de vídeo já no ar**.
+A **prévia é outra coisa**: é teaser de faixa que ainda não existe no canal, e sobe sozinha.
+Foi assim com o Sukuna (`7MhTqirzwiE`, `Rq_0PpBIYwk`) e com o Gojo.
+
+**Molde do corte:** `gerar_previa_gojo.py` / `gerar_previa_2_sukuna.py` — enquadra o 16:9
+inteiro sobre fundo borrado do próprio frame (nunca center-crop) e aplica as duas tarjas
+da Regra 00, com **a cor do título trocada pela cor do personagem** amostrada do clipe
+(Sukuna `#D20D2F`, Gojo `#00C0C0`).
+
+**Molde da copy** — a prévia **não aponta para `youtu.be/<ID>`** (o longo não existe);
+aponta para o handle:
+
+| Plataforma | Padrão |
+|---|---|
+| YouTube Short | `PRÉVIA: <PERSONAGEM> (<Faixa>) 🌀 Música em Produção! #Shorts #<Anime>` |
+| TikTok / Reels | `<GANCHO EM CAIXA ALTA> 🌀 Prévia exclusiva da próxima faixa da MUGEN RAPS: <Personagem> — <Faixa>. Faixa completa em breve no canal: @MugenRapsOficial + 7–8 hashtags` |
+
+⚠️ **O `estado` não cobre Instagram.** Depois de `instagram`, confirme lendo
+`/mugenraps_oficial/reels/` pelo `cdp.py` e comparando a legenda do reel mais novo — o
+"Compartilhar" já deu falso negativo duas vezes com o Reel no ar.
+
+### Prévia do Gojo — no ar em 02/09/2026
+
+`gojo_previa_9x16.mp4` (30 s, janela 50 s–1:20 do master, 20,9 MB):
+
+| Plataforma | Referência |
+|---|---|
+| YouTube Shorts | `dfyRR3Npi3c` |
+| TikTok @mugen_raps | publicado 02/09 11:08 |
+| Instagram @mugenraps_oficial | `/reel/DcyayqStb96/` |
+
 ## Regra 0 — a ordem do lançamento
 
 ⭐ **O vídeo longo sobe PRIMEIRO. Os cortes vêm 2 a 4 h depois.**

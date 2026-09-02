@@ -101,3 +101,29 @@ O `limpar_fontes_muzan.sh` grava em `<saida>.tmp.mp4` e só então dá `mv`. Sem
 um run interrompido no meio deixa um `.mp4` truncado que o teste `[ -f ]` aceita
 como bom na próxima execução — foi exatamente o que aconteceu e gerou uma fonte
 de 75 s onde o original tinha 202 s.
+
+## 7. Média temporal — o teste que pega o que a folha a 1 fps não pega *(02/09/2026)*
+
+🔴 **A auditoria a 1 fps deixou passar um `9anime.to`.** No AMV do Gojo, 51 folhas de
+contato foram olhadas uma a uma e a marca — pequena, semitransparente, no canto superior
+esquerdo do `U2ja8ZLRwrA` — não apareceu em nenhuma.
+
+O que pegou: **somar todos os quadros a 4 fps e olhar uma imagem só por fonte.** Conteúdo
+de anime se move e vira borrão; marca fixa, badge de canal, cartela de disclaimer e
+legenda queimada ficam no mesmo lugar e sobrevivem nítidas. Na mesma passada apareceram
+os créditos de abertura do `CVLgOPflhzM` (74 s+) e do `TKc0VPEwsu8` (11–13 s).
+
+Gere **dois painéis**: a média (a marca aparece como texto fantasma) e o mapa de
+estabilidade `255 · (1 − desvio/média_do_desvio)` (texto fixo fica claro sobre fundo escuro).
+
+⚠️ **Acumule em streaming.** A primeira versão carregou todos os quadros num array
+float32 e morreu por memória num vídeo de 258 s (1.032 × 960×540×3 → 6,4 GiB). Some
+`x` e `x²` quadro a quadro e divida no fim.
+
+⚠️ **Em canto, `crop`, não `delogo`.** No canto o `delogo` só tem duas bordas para
+interpolar e borra. Para o `9anime.to`: `crop=1846:1039:74:41,scale=1920:1080`.
+
+A folha a 1 fps **continua necessária** — é ela que diz o que existe em cada segundo para
+escolher os planos. As duas são complementares: a folha é conteúdo, a média é marca.
+
+Script: `projetos/imensidao-vazio/media_temporal.py`.

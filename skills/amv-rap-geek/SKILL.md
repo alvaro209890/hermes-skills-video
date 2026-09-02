@@ -177,6 +177,35 @@ with open("transcricao.json", "w", encoding="utf-8") as f:
     json.dump(data, f, ensure_ascii=False, indent=2)
 ```
 
+### 3.1 Quando o Whisper não fecha a letra *(Gojo, 02/09/2026)*
+
+Em faixa de trap o 808 mascara a voz e o Whisper na mixagem deixa buracos — no Gojo
+foram **12 linhas indecifráveis**. Duas fontes resolvem, e a regra é **só aceitar o que
+duas leituras independentes confirmam**, deixando o canon do anime desempatar.
+
+**a) A partitura em MusicXML é fonte de letra.** O `.zip` que o Álvaro exporta da música
+traz `<lyric><text>` preso a cada nota, com `divisions` e `<sound tempo=>` para virar
+tempo absoluto. Acumule `<duration>` respeitando `<backup>`/`<forward>` e as trocas de
+tempo. Sozinha ela resolveu *"Desculpa, **Amanai**"* (a Riko Amanai, que o Toji matou),
+*"em nanossegundos"*, *"o ápice"*, *"Nove cordas"* e *"rasgando a neblina"*.
+⚠️ **Ela também é ASR** — trocou "Lapso" por "Lápis" e "Choque" por "Shoki". Não é folha
+do Suno. Parser: `projetos/imensidao-vazio/ler_musicxml.py`.
+
+**b) Separação de fontes.** `demucs --two-stems=vocals -n htdemucs`, ~6 min para 228 s em
+16 núcleos. Com o vocal limpo o Whisper acertou de primeira *"24 de dezembro em
+Shinjuku"*, *"0,2 segundos e o cérebro congelou"* e *"essa cura no fluxo reverso"*.
+⚠️ Venv próprio (`~/.venv_demucs`) e **instale `numpy` e `soundfile` explicitamente** — o
+pacote do `demucs` não puxa `numpy` e quebra no import.
+
+⚠️ 🔴 **Nunca passe `initial_prompt` em clipe curto.** Em **5 de 9** trechos de 5–15 s o
+Whisper cuspiu o próprio prompt de volta como se fosse transcrição — e isso passa fácil
+por letra boa. Em janela curta: sem prompt, e varie `temperature` (0,0 / 0,2 / 0,4) para
+ver se a leitura é estável.
+
+⭐ **Peça a partitura ao Álvaro quando a letra não fechar** — ele exporta em segundos, e
+foi o que destravou esta faixa.
+
+
 ## 4. Pipeline de Renderização em Duas Vias (Master 1080p + WhatsApp)
 
 1. A vinheta v2 **já sai em 1080p@30fps H.264/yuv420p** — não precisa normalizar; concatene direto. (Só vídeo longo; corte vertical não leva vinheta.)
@@ -240,6 +269,7 @@ with open("transcricao.json", "w", encoding="utf-8") as f:
 | **Muzan Kibutsuji** | **V5 intro v2 (01/09/2026) — PUBLICADA** | `saidas/muzan_amv_v5_introv2_1080p.mp4` |
 | **Sangue Explosivo — Nezuko** | **V2 (01/09/2026) — FINAL** | `projetos/sangue-explosivo/saidas/sangue_explosivo_nezuko_amv_v2_master_1080p.mp4` |
 | **Ryomen Sukuna — O Rei das Maldições** | **Master 01/09/2026 — FECHADO, não publicado** | `saidas/sukuna_amv_oficial_master_1080p.mp4` |
+| **Satoru Gojo — Imensidão do Vazio** | **Master 02/09/2026 — FECHADO, não publicado** (prévia 9:16 no ar) | `projetos/imensidao-vazio/saidas/imensidao_vazio_gojo_master_1080p.mp4` |
 
 ⚠️ **Muzan está fechado e publicado.** O que foi ao ar em 01/09/2026 é a **V5 com a
 intro v2** (`saidas/muzan_amv_v5_introv2_1080p.mp4`, 3:56) — não a V4. Não voltar para

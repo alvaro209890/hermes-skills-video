@@ -21,6 +21,37 @@ Leia esta referência quando for encurtar a música, resincronizar legendas ou m
 5. Grave `cut_out`, `cut_in`, segundos/beats removidos, erro de grid e posição da primeira estrofe
    antes/depois em JSON.
 
+## Quando o BPM não fecha *(Gojo, 02/09/2026)*
+
+🔴 A receita acima **pressupõe que existe um grid**. Em "Imensidão do Vazio" não existia:
+o ajuste de período errava **57–64 ms em qualquer valor entre 0,26 e 0,42 s**, porque a
+intro é atmosférica e o `find_peaks` mistura kick, snare e hi-hat. Insistir em achar o
+BPM ali é perder a tarde.
+
+O que funciona sem BPM: **casamento de fase de loop por correlação cruzada normalizada
+do envelope**. Para remover `[t, t+L]`, a vizinhança de `t` e a de `t+L` precisam ocupar
+a mesma posição no ciclo do beat — e isso se mede direto:
+
+1. envelope a 500 Hz (2 ms) das bandas graves (`<150 Hz`), médios (`200–4000 Hz`) e total;
+2. para cada par `(t, L)`, NCC das três bandas em janelas de ±1,6 s;
+3. penalize salto de amostra e degrau de nível na junção; bonifique `t+L` cair num ataque;
+4. busca grossa a 10 ms, refino a 2 ms em volta dos melhores.
+
+⭐ **Se as zonas convergirem sozinhas no mesmo `L`, é o período do loop e o par está certo.**
+No Gojo as duas zonas independentes caíram em `L ≈ 3,54 s` sem que isso fosse imposto.
+
+⚠️ **Não ordene os candidatos pelo score da busca.** O 1º colocado do score deu 113 ms de
+desvio na validação; o 4º deu 0,0 ms. **Rode a métrica de validação em cima dos candidatos
+e reordene por ela.**
+
+⚠️ **Não compare com a mediana dos intervalos num beat de subdivisão mista.** Uma junção
+apareceu "31,9 ms acima do limiar" contra a mediana e é imperceptível: o intervalo que
+cruza a emenda (200,3 ms) está a **2,9 ms** de um intervalo que já acontece nos compassos
+vizinhos. **A referência certa é o intervalo vizinho mais próximo**, não a mediana.
+
+Resultado no Gojo: 7,666 s removidos em duas emendas (4,128 s + 3,538 s), desvio −18,9 ms
+e 2,9 ms do vizinho, sem clique (HF na junção 1,2 e 12 dB **abaixo** do entorno).
+
 ## Um mapa para todos os consumidores
 
 Para uma remoção `[cut_out, cut_in)` de duração `D`:
