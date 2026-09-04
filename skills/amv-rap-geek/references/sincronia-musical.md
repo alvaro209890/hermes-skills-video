@@ -83,3 +83,37 @@ manuais independentes e não some a duração da vinheta aos timestamps da músi
 - musicalidade: compare distância média e percentil 90 dos boundaries ao onset antes/depois;
 - artefato: decodificação completa de master/compacto, 1080p30, AAC, faststart, loudness/true peak e
   auditoria do intermediário sem `.ass` em intervalos de 0,5 s.
+
+
+## 🔴 O corte de áudio se faz na WAV DECODIFICADA *(Akaza, 03/09/2026)*
+
+Cortar com `-ss/-to` direto no **mp3** deixou a última parte **52 ms curta** — é o
+padding de seek do decodificador. E 52 ms não somem: viram **atraso acumulado em
+toda legenda depois da emenda**, porque o `.ass` foi calculado pelo mapa temporal
+teórico e o áudio ficou mais curto que o mapa.
+
+Faça assim: decodifique a faixa inteira para PCM uma vez, fatie por **índice de
+amostra** (`int(round(t*SR))`), concatene e escreva. Erro medido: **0,0 µs**.
+Receita em `projetos/akaza/cortar_audio.py`.
+
+## Nem sempre se corta a INTRO
+
+Antes de tirar qualquer coisa do começo, veja onde cai a **primeira voz em relação
+aos 4 s da vinheta muda**. No Akaza a voz entrava em **6,32 s**: remover um período
+do loop (3,0 s) a jogaria para 3,3 s, **dentro da cartela** — a letra seria ouvida
+sem imagem e a legenda cairia sobre a vinheta.
+
+O "só hit" aproveitável era outro: **12,77 s de instrumental entre o fim do gancho e
+a 1ª estrofe**. Saíram 6,025 s de lá, em duas emendas, e a estrofe caiu para 20,1 s
+pós-vinheta — dentro da preferência editorial, com o gancho intacto.
+
+## A ordenação por validação, com número *(Akaza)*
+
+A regra da seção anterior se confirmou pela segunda vez, agora em par de emendas:
+
+| | score da busca | desvio na validação |
+|---|---:|---:|
+| 1º colocado do score | 5,82 | **2,0 ms** |
+| **escolhido** | 4,64 | **0,0 ms** (HF da junção 4,1 dB *abaixo* do entorno) |
+
+**Rode a métrica de validação em cima dos candidatos e reordene por ela.** Sempre.

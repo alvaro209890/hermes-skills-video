@@ -1,7 +1,7 @@
 ---
 name: amv-rap-geek
 description: "Crie AMVs de rap geek com narrativa e beat precisos."
-version: 2.1.0
+version: 2.2.0
 author: Álvaro (alvaro209890), Hermes Agent
 license: MIT
 platforms: [linux]
@@ -47,6 +47,16 @@ projetos/<slug>/
    barrar qualquer corte fora delas **antes** de gastar CPU.
    📄 Receita completa, como medir a linha de corte e o mapa de contaminação das fontes já
    auditadas: `references/limpeza-fontes.md`.
+
+   🔴 **De onde vem fonte limpa — o oposto do que parece** *(Akaza, 03/09/2026)*.
+   Das 36 fontes baixadas, **11 passaram**. Os clipes **OFICIAIS foram os piores**:
+   o material Crunchyroll/Aniplex vem com `BUY NOW ON DIGITAL`, logos de Apple TV /
+   Google Play / prime video, `Watch Full Episodes` e **legenda em inglês queimada**.
+   Trailer de filme carrega `絶賛公開中` e `NOW PLAYING… IN THEATRES IN 2025`.
+   **Quem salva o clipe são os packs `twixtor` / `clips for edits`** que editores
+   publicam limpos de propósito — procure por eles primeiro. E confira a pureza:
+   "Akaza Backstory" (`bs_JhEEkRfQ8cg`, 215 s) era **slideshow de painéis de mangá**,
+   não anime.
 3. **Todo corte novo leva as tarjas de marca.** 🔴 Regra do Álvaro (01/09/2026), no
    padrão dos cortes do Hakari. **Os já postados não são refeitos** — vale de agora em diante.
 
@@ -117,6 +127,13 @@ projetos/<slug>/
    - Como referência, faça a primeira estrofe cantada entrar em até cerca de **20 s depois da
      vinheta de 4 s**. Esse valor é uma preferência editorial, não uma obrigação para músicas cuja
      construção musical peça outro tempo.
+   - 🔴 **Às vezes NÃO se corta a intro** *(Akaza, 03/09/2026)*. Antes de tirar qualquer coisa
+     do começo, veja onde cai a **primeira voz em relação aos 4 s da vinheta MUDA**. No Akaza
+     a voz entrava em 6,32 s: remover um período do loop (3,0 s) a jogaria para 3,3 s, **dentro
+     da cartela** — letra ouvida sem imagem e legenda por cima da vinheta. O corte saiu do
+     instrumental **depois** do gancho (12,77 s disponíveis), e a 1ª estrofe caiu para 20,1 s
+     pós-vinheta, batendo a preferência editorial. **O "só hit" que dá para cortar nem sempre
+     é o do começo.**
    - Encurte somente silêncio, sintetizador ou beat repetitivo sem nova informação. A emenda deve
      remover um número inteiro de beats/compassos e ser refinada em zero crossing ou microcrossfade,
      sem cortar a cauda da última palavra nem o ataque da próxima.
@@ -125,7 +142,27 @@ projetos/<slug>/
      `references/sincronia-musical.md`.
 5. **Legendas Cinematográficas (.ass):**
    - Fonte: `Cinzel` (romana clássica, CAIXA ALTA, branca).
+     ⚠️ **A V5 do Akaza voltou para Impact sem que ninguém percebesse.** Impact é o estilo
+     ANTIGO. Confira a fonte de todo `.ass` que você não gerou antes de renderizar.
    - Destaque cinético em palavra-chave com a cor do personagem (ex: Ciano/Ouro para Kashimo, Carmesim `&H001515E8&` para Muzan, Verde Neon `&H00A0F000&` para Hakari).
+   - ⭐ **A cor da aura precisa de um plano B — a aura também está no fundo.** *(Akaza V6,
+     03/09/2026)* A Agulha de Compasso do Akaza **é ciano e ocupa a tela inteira**: palavra
+     ciano ali some. Meça, na faixa onde a legenda vai cair, a fração de pixel da cor da
+     aura e a luz média; se `aura > 0,18` ou (`luz > 150` e `aura > 0,08`), troque para uma
+     **segunda cor do próprio personagem** (no Akaza, o ouro dos olhos de Lua Superior Três).
+     Amostre as duas dos clipes: aura `#68C8F8`, ouro `#F6BA06`. 7 das 51 linhas caíram na
+     regra — todas as da bússola. **A V5 alternava ouro e ciano sem critério nenhum.**
+   - ⭐ **A POSIÇÃO se mede, cena a cena — não é tudo no rodapé.** Leia o picture lock a 4
+     quadros/s em 320×180, calcule a energia de detalhe (soma dos gradientes) em faixas
+     candidatas (topo, superior-esq/dir, centro, rodapé, rodapé-esq/dir) e escolha a faixa
+     livre na janela de cada linha. No Akaza duas linhas estavam num rodapé com **detalhe 40**
+     contra **3,8** no topo. Regras: o rodapé é o padrão e só se sai dele se estiver mesmo
+     ocupado (detalhe > 13, ou 1,6× pior que a melhor com diferença > 4); 🔴 **se o rodapé já
+     É a melhor faixa, "estar cheio" não é motivo para sair**; histerese para não pular de
+     posição a cada verso; e reforce o `ord` de 3,8 para 5,2 quando a faixa tiver `luz > 150`.
+   - 🔴 **`WrapStyle 2` não quebra linha: linha larga demais é CORTADA sem aviso.** Estime a
+     largura (`nº de caracteres × (corpo × 0,62 + fsp)`) contra os 1740 px úteis e **encolha o
+     corpo até caber**. Perder texto é pior que perder 4 % de corpo.
    - Fade suave de linha inteira sem varredura de karaokê.
    - Sincronização rigorosa milissegundo a milissegundo baseada na transcrição Whisper.
    - O timestamp acompanha a **voz**. O corte visual pode ser aproximado do kick/ataque mais próximo
@@ -152,6 +189,23 @@ projetos/<slug>/
      - Descrição Obrigatória: Link direto e clicável para o videoclipe principal completo em 4K (`youtu.be/...`).
      - Metadados: Público `PUBLIC`, não infantil (`VIDEO_MADE_FOR_KIDS_NOT_MFK`).
      - O YouTube Shorts não possui limite diário de conta nova como o TikTok, permitindo publicar todos os 3 cortes no mesmo dia para tracionar o lançamento principal.
+
+## 2z. Ambiente deste PC — o que existe e o que não existe *(03/09/2026)*
+
+⚠️ **Não há `scipy` neste PC** — nem no python do sistema, nem no `.venv_whisper`,
+nem no `.venv_demucs`. Os scripts de sinal do Gojo importam `scipy.signal` e **não
+rodam mais**. O substituto pronto, só com numpy, é
+`projetos/akaza/sinal.py`: filtro de banda por **FFT** (fase zero, equivalente ao
+`sosfiltfilt`), envelope RMS e detector de picos. **Reaproveite esse arquivo em vez
+de instalar scipy.**
+
+⚠️ **`np.correlate(x, x, mode="full")` é O(n²)** e trava em 92 k amostras (envelope
+de 185 s a 500 Hz). Autocorrelação por FFT resolve em milissegundos:
+`F = np.fft.rfft(f, n2); ac = np.fft.irfft(F*np.conj(F), n2)[:len(f)]`.
+
+Existe: `ffmpeg`/`ffprobe` com VAAPI, `yt-dlp` novo em `~/.local/bin` (o do apt está
+quebrado), `faster-whisper` no `.venv_whisper`, `demucs` no `.venv_demucs`, `numpy`
+e `PIL` no python do sistema, fonte `Cinzel` em `~/.local/share/fonts`.
 
 ## 3. Transcrição & Alinhamento Temporal de Alta Precisão
 
@@ -204,6 +258,29 @@ ver se a leitura é estável.
 
 ⭐ **Peça a partitura ao Álvaro quando a letra não fechar** — ele exporta em segundos, e
 foi o que destravou esta faixa.
+
+**Confirmado no Akaza (03/09/2026), com números.** A partitura destravou **8 linhas**
+que o Whisper não fechava — `morte destrutiva`, `Mas na eternidade nós podemos combater`,
+`Punho do vazio`, `Cem anos de sangue` e, a que mais importa, **`A casa se foi, HAKUJI vai
+renascer`** (o Whisper ouvia *"a Cujifai renascer"*). Parser pronto:
+`projetos/akaza/ler_musicxml.py` (acumula `<duration>` respeitando `<backup>`/`<forward>`
+e as trocas de `<sound tempo=>`).
+
+⚠️ **E em 3 linhas o Whisper corrigiu a partitura** (`Prefiro o inferno a continuar a
+viver` saiu de "Prefiro internar, Banshee na viva"). São **duas ASRs discordando** — nenhuma
+é gabarito.
+
+⭐ **O canon é o terceiro juiz, e ele resolve nome próprio.** As três leituras erravam
+foneticamente **Muzan** ("Musa"), **Keizo** e **Koyuki** ("Toshibo"/"Kibuki") e os
+**sessenta e sete** homens que o Hakuji matou com as mãos ("607"). Nome de personagem e
+número canônico **sempre** se conferem na obra, nunca no ASR.
+
+🔴 **Linha sem confirmação dupla NÃO vira legenda.** O gancho do Akaza (6,0–11,5 s) deu
+quatro leituras totalmente divergentes — `Precisa de um chão` / `It's just so wrong` /
+`Pulsou no chão, estilou o soro` / `Do seu luxo, Still so wrong`. É ad-lib processado, e
+**ficou sem legenda**: o clipe abre a letra aos 12,6 s, no primeiro verso que as três
+fontes confirmam. **Buraco na legenda é melhor que letra inventada** — o que está queimado
+na tela é assinado pelo Álvaro.
 
 
 ## 4. Pipeline de Renderização em Duas Vias (Master 1080p + WhatsApp)
@@ -262,20 +339,77 @@ foi o que destravou esta faixa.
    correção é remux (passo 3) sem republicar o vídeo — decisão do Álvaro
    pendente sobre substituir os arquivos publicados.
 
+## 4b. Transições: o `dissolve` do FFmpeg chuvisca *(Akaza V6, 03/09/2026)*
+
+🔴 **`xfade=transition=dissolve` NÃO é um cross-fade.** No FFmpeg, `dissolve` é
+**dissolução por pixel aleatório**: a cada quadro ele sorteia, pixel a pixel, se mostra A
+ou B. O resultado é **chuvisco sal-e-pimenta na tela inteira** no meio da transição. O
+cross-fade suave chama-se **`fade`**.
+
+O Akaza V3 e V5 usaram `dissolve` nos **21** pontos de transição e o chuvisco foi para o
+vídeo **entregue no WhatsApp do Álvaro**. A 6 quadros (0,20 s) passa por "granulado da
+fonte"; alongando para 0,30 s fica escancarado. Conferido quadro a quadro no master da V5,
+recorte 960×540 em 1:1, aos 101,57 s e 110,63 s.
+
+**Vocabulário corrigido:**
+
+| Sentido do corte | Filtro | Duração |
+|---|---|---|
+| Memória / passado | **`fade`** | 0,30 s |
+| Virada de ato | **`fade`** | 0,36 s |
+| Expansão de domínio | `circleopen` / `radial` | 0,28–0,30 s |
+| Técnica / impacto | `fadewhite` | 0,13 s |
+| Ação dentro da luta | `smoothleft` | 0,18 s |
+| Respiro instrumental | `hblur` | 0,16 s — **um por vídeo** |
+
+⚠️ **`hblur` é whip-blur, não respiro.** No meio da transição a imagem vira borrão
+horizontal ilegível. Eu pus quatro no Akaza (dois a 1,8 s um do outro) e ficou grosseiro.
+
+🔴 **Transição também passa por QA de imagem.** A folha de contato a 1 quadro/s **não a
+vê**: ela dura 4 a 12 quadros e cai entre as amostras — o mesmo buraco dos quadros pretos
+da fonte. Extraia o **meio de cada transição** (`start − duração/2`) e olhe todas em folha.
+
+⚠️ Transição custa janela limpa: 0,30 s exige 9 quadros da fonte *antes* do ponto de
+entrada. O validador tem que conferir isso antes de gastar CPU.
+
+## 4c. Montagem sem letra também tem ritmo *(Akaza V6, 03/09/2026)*
+
+O outro do Akaza eram **12 planos de 2,80 s cravados** — 19 % do vídeo com cara de
+slideshow, e 2,80 s não é múltiplo de nada na música. Recorte a montagem em **múltiplos de
+compasso com padrão variado** (usei 2,1,2,1,2,2,1,2,2,2 compassos + resto) e mova o
+`source_start` junto, para o mesmo instante continuar no centro do plano. Em plano parado
+de 3 s ou mais, um **push-in lento de 5–7 %** (`zoompan` com `d=1`) tira o ar de slideshow.
+
+🔴 **Meça o BPM no áudio FINAL, não no original.** O `beatgrid.json` do Akaza foi feito
+antes das duas emendas de −6,025 s e apontava 186 BPM. Refeito na trilha entregue:
+**140,05 BPM, compasso de 1,714 s**, erro mediano de 63 ms. O número se confirma sozinho —
+as linhas da letra estão espaçadas exatamente 1,714 s (30,000 → 31,714 → 33,429 …). Se a
+grade não explica o espaçamento da letra, a grade está errada.
+
 ## 5. Estado das faixas
 
 | Faixa | Versão final | Arquivo |
 | :--- | :--- | :--- |
 | **Muzan Kibutsuji** | **V5 intro v2 (01/09/2026) — PUBLICADA** | `saidas/muzan_amv_v5_introv2_1080p.mp4` |
 | **Sangue Explosivo — Nezuko** | **V2 (01/09/2026) — FINAL** | `projetos/sangue-explosivo/saidas/sangue_explosivo_nezuko_amv_v2_master_1080p.mp4` |
-| **Ryomen Sukuna — O Rei das Maldições** | **Master 01/09/2026 — FECHADO, não publicado** | `saidas/sukuna_amv_oficial_master_1080p.mp4` |
-| **Satoru Gojo — Imensidão do Vazio** | **Master 02/09/2026 — FECHADO, não publicado** (prévia 9:16 no ar) | `projetos/imensidao-vazio/saidas/imensidao_vazio_gojo_master_1080p.mp4` |
+| **Ryomen Sukuna — O Rei das Maldições** | **PUBLICADO** — `youtu.be/fG3g99jXts8` | `saidas/sukuna_amv_oficial_master_1080p.mp4` |
+| **Satoru Gojo — Imensidão do Vazio** | **Master v2 02/09/2026 — FECHADO, não publicado** (prévia 9:16 no ar) | `projetos/imensidao-vazio/saidas/imensidao_vazio_gojo_v2_master_1080p.mp4` |
+| **Akaza** (Demon Slayer) | **V6 03/09/2026 — FECHADO, não publicado** | `projetos/akaza/saidas/akaza_amv_v6_master_1080p.mp4` (2:59) |
+
+⚠️ **Akaza: use a V6, não a V3/V5.** As duas anteriores saíram com as 21 transições em `xfade=dissolve` (chuvisco de pixel aleatório — §4b) e a V5 ainda trocou a Cinzel por Impact. A V6 tem o mesmo áudio e a mesma montagem verificada, com transições, legendas e outro corrigidos. Evidência em `projetos/akaza/revision_v6_20260903/`.
 
 ⚠️ **Muzan está fechado e publicado.** O que foi ao ar em 01/09/2026 é a **V5 com a
 intro v2** (`saidas/muzan_amv_v5_introv2_1080p.mp4`, 3:56) — não a V4. Não voltar para
 V1/V2/V3: elas têm `Subscribe`, `4KAnime`, `4K ANINOMI`, cartelas `UPPER FIVE/FOUR/ONE`
 e legendas em inglês/português queimadas. Pendência conhecida: `tanjiro_demon_king`
 (203–214 s) é animação de fã, não o anime — trocar numa próxima rodada.
+
+## 5b. Onde fica o master que ainda não foi ao ar *(03/09/2026)*
+
+`~/Documentos/Video_Studio/NAO_PUBLICADOS/`, espelhando `PUBLICADOS/`, com
+**links simbólicos** — o arquivo real continua no `saidas/` do projeto, então não
+há cópia divergindo nem disco gasto duas vezes. Ao publicar, mova a pasta para
+`PUBLICADOS/` (aí sim copiando) e apague os links.
 
 ## 6. Publicação — skill separada
 

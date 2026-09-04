@@ -127,3 +127,41 @@ A folha a 1 fps **continua necessária** — é ela que diz o que existe em cada
 escolher os planos. As duas são complementares: a folha é conteúdo, a média é marca.
 
 Script: `projetos/imensidao-vazio/media_temporal.py`.
+
+## 8. Mapa de contaminação — projeto `akaza` (auditado 03/09/2026)
+
+**36 fontes baixadas, 11 aprovadas.** O achado que muda a estratégia de busca:
+
+🔴 **Os clipes OFICIAIS foram os piores.** O material da Crunchyroll/Aniplex —
+justamente o que parece "fonte boa" — vem com cartela de venda e legenda em inglês
+queimada. Trailer de filme carrega promo japonesa por cima da imagem.
+
+| fonte | o que tinha | veredito |
+| :--- | :--- | :--- |
+| `bLSQgT_So7Y`, `s3kYr2OVoUc` (Infinity Castle, oficiais) | `BUY NOW ON DIGITAL` + Apple TV / Google Play / YouTube / prime video + legenda EN + `©Koyoharu Gotoge…` | descartadas |
+| `HFAzgHHITVM`, `Be72PFBKWso` (Crunchyroll) | logo Crunchyroll + `Watch Full Episodes` / `Continue Watching` + `NOW PLAYING EXCLUSIVELY IN THEATRES IN 2025` | descartadas |
+| `gkXS7_5GOgc` (VS Trailer oficial) | cartelas `UPPER THREE AKAZA`, `ONLY IN MOVIE THEATRES SEPTEMBER 12` | descartada |
+| `tw_WBUeHjhcoCE`, `tw_vfw_AhARHyY`, `tw_O25UfE8I8OI` | `絶賛公開中` (promo JP queimada no trailer) + `NOW SCREEN RECORD THIS` | descartadas |
+| `9p3uVC9mexQ` | cartela `FIRE ANIME MERCH 20%-60% OFF / LINK IN DESCRIPTION` + faixa de legenda | descartada |
+| `q2uoZxOBfn0` | marca `B EDITS` + `SUBSCRIBE`/`LIKE` + legenda EN | descartada |
+| `gvOxWaNWVZ8` | `MUKULWAGHXD` no canto sup. esq. + legenda EN | descartada (há versão limpa da MESMA cena) |
+| `I_CpKjEcjt0` | legenda EN no rodapé + `Flashback A` no canto sup. dir. | recuperável por recorte, não foi usada |
+| `bs_JhEEkRfQ8cg` "Akaza Backstory" (215 s) | 🔴 **slideshow de painéis de MANGÁ**, não anime | descartada por **pureza** |
+
+⭐ **Quem salvou o clipe foram os packs `twixtor` / `clips for edits`**, que editores
+publicam **limpos de propósito**. Aprovadas inteiras: `tw_rQSWOUXsTnE` (123 s),
+`tw_dhN-DqTWAE8` (118 s), `tw_IWuavJgh1IA` (88 s), `tw_QxFAz2IGalw` (49 s),
+`tw_y3PkkoLkKHA` (61 s), `tw_6XAyyHGuLr0` (183 s — traz o backstory Hakuji/Koyuki
+inteiro em 146–182 s), `5ZgAoM7-Bs4` (208 s), `6gACQZ83_1Q`, `Mmjw39tE2HI`,
+`WF2gbMxaDik`, `dQa1h6RAVKY`.
+
+**Busque nesta ordem:** `<personagem> twixtor 4k clips for edits` → `<personagem>
+scene pack raw clips` → `<personagem> no subtitle no copyright`. Só depois o clipe
+oficial.
+
+### Falso positivo que se repete: kanji nativo
+
+A varredura do picture lock deu **3 suspeitos em 449 quadros** e os três eram os
+kanji **上弦 / 参** nos olhos do Akaza — arte do próprio anime. Confirma a §5:
+**kanji nativo não é legenda de terceiro**. O detector não sabe a diferença; quem
+sabe é quem olha o quadro.
