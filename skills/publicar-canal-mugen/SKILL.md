@@ -37,6 +37,29 @@ python3 publicar.py tiktok-apagar --legenda-contem T --duplicado --confirmo
 
 ---
 
+## A outra porta: criar
+
+Esta skill é o que **sai** do estúdio. O que acontece **dentro** dele — capa,
+banner, capa quadrada, corte vertical — é a skill **`criar-canal-mugen`**, com
+a ferramenta `estudio.py` na mesma pasta. Mesma regra, mesmo motivo.
+
+```bash
+python3 estudio.py estado           # o que existe, o que já foi ao ar
+python3 estudio.py capa <slug>      # as 3 artes do lançamento
+python3 estudio.py corte <slug> --de 63.5 --dur 34.5 --tema "..."
+```
+
+Cada faixa tem um manifesto em `projetos/<slug>/projeto.json` — cor, frames,
+master, estado de publicação. **Depois de publicar, anote ali**
+(`publicado.estado`, `publicado.youtube`): é o que faz o `estudio.py estado`
+ser confiável na próxima faixa.
+
+O estúdio inteiro está versionado em `github.com/alvaro209890/mugen-studio`
+(privado). Os scripts aposentados dos dois surtos de descartáveis estão em
+`Video_Studio/_arquivo_morto/` — **não use nada de lá.**
+
+---
+
 ## Regra 00 — vertical: passa de 30 s e sai com copy
 
 🔴 **Corte vertical passa de 30 segundos, SEMPRE** (regra do Álvaro, 01/09/2026,
@@ -85,6 +108,39 @@ que roda **antes de abrir o navegador** e recusa a publicação quando a legenda
 **Abortar é o comportamento certo.** `publicar.py` prefere não publicar a
 publicar torto: sem 9:16 confirmado, sem legenda conferida na tela ou com algo
 cobrindo o botão, ele para e explica. Isso não é bug para contornar.
+
+---
+
+## Regra 00d — 🔴 o segundo porteiro: a IMAGEM do arquivo *(05/09/2026)*
+
+Desde 05/09/2026 `youtube-longo`, `youtube-short`, `tiktok` e `instagram` chamam também
+`_validar_imagem`, que roda `ferramentas/imagem.py` sobre o arquivo **antes de abrir o
+navegador**. Regra do Álvaro: *"às vezes são colocadas imagens de telas pretas apenas com
+avisos ou até imagens não condizentes"*.
+
+Ele **recusa a publicação** quando o vídeo tem:
+
+- um bloco de **tela morta** (escura e chapada) de **1,0 s ou mais**, ou mais de **1 %** do
+  vídeo em tela morta;
+- mais de **5 %** quase-morto (no celular isso é tela preta);
+- mais de **6 %** congelado (plano parado, cara de slideshow);
+- mais de **0,5 s** de página clara sem cor — **line-art de mangá** dentro de um AMV de anime.
+
+O que foi medido no dia em que o porteiro nasceu, nos masters **que já estão no ar**:
+`hakari` com **9,8 s de tela morta (6,1 %)** e **39,7 s de página de mangá**; `kashimo`
+com 19,3 s de página; `muzan v5` com 18,7 s quase-morto.
+
+```bash
+python3 estudio.py imagem <slug>       # o relatório + a folha de contato dos suspeitos
+python3 publicar.py youtube-longo ARQ --titulo T --desc D --ignorar-qa   # exceção
+```
+
+> 🔴 **`--ignorar-qa` publica e IMPRIME o motivo.** A decisão editorial é do Álvaro, mas a
+> exceção fica no log em vez de virar hábito. **Não use para "destravar" o comando** —
+> tela preta não se conserta com filtro: o plano tem de mudar, no estúdio.
+
+⚠️ O porteiro **não lê texto**. Cartela de terceiro, marca d'água e legenda de dublagem se
+provam com o olho, na folha `projetos/<slug>/qa/imagem_suspeitos.png`.
 
 ---
 
@@ -169,10 +225,17 @@ descrição do Muzan diz "1080p 60FPS" e o arquivo é 30 fps. Dado sai do
 ⭐ **Ordem do Álvaro (01/09/2026): não existe vídeo publicado sem capa.**
 Publicar e deixar a miniatura automática do YouTube não conta como entregue.
 
-Gerador: `~/Documentos/Video_Studio/ferramentas/artes_muzan.py` (é o modelo —
-copie para `artes_<personagem>.py` e troque frames, textos e cor).
+🔴 **A instrução que estava aqui — "copie o `artes_muzan.py` para
+`artes_<personagem>.py`" — produziu 8 scripts quase idênticos e foi aposentada
+em 03/09/2026.** Não copie script: preencha o manifesto.
 
-Ele produz três peças:
+```bash
+cd ~/Documentos/Video_Studio/ferramentas
+python3 estudio.py novo <slug>      # se a faixa ainda não tem manifesto
+python3 estudio.py capa <slug>      # as três peças de uma vez
+```
+
+Detalhe na skill **`criar-canal-mugen`**. Ele produz três peças:
 
 | Peça | Tamanho | Para quê |
 |---|---|---|

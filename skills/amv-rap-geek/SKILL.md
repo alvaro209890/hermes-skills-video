@@ -164,7 +164,81 @@ projetos/<slug>/
      largura (`nº de caracteres × (corpo × 0,62 + fsp)`) contra os 1740 px úteis e **encolha o
      corpo até caber**. Perder texto é pior que perder 4 % de corpo.
    - Fade suave de linha inteira sem varredura de karaokê.
-   - Sincronização rigorosa milissegundo a milissegundo baseada na transcrição Whisper.
+   - 🔴 **UMA LINHA VISÍVEL = UM ONSET PRÓPRIO. Nunca um relógio para duas falas.**
+     *(medido em 04/09/2026 — era esta a causa do "a legenda sempre fica dessincronizada")*
+
+     Até aqui a letra era digitada como uma tupla por **dupleto**
+     (`(início, fim, estilo, "LINHA A\\NLINHA B")`), e o gerador quebrava o `\N`
+     em dois eventos empilhados dando ao de baixo **o tempo do de cima + 90 ms**.
+     Só que as duas metades **não são cantadas juntas** — a de baixo entra 1 a 2
+     segundos depois. Resultado medido contra o onset de palavra do Whisper:
+
+     | faixa | 1ª linha do grupo | 2ª linha (empilhada) | eventos que são 2ª metade |
+     |---|---|---|---|
+     | Rengoku V2 | −0,120 s | *não usa dupleto* | **0 %** |
+     | Akaza V6 | +0,255 s | **+1,225 s** (p90 +1,675) | 45 % |
+     | Mahoraga v2 | +0,250 s | **+1,000 s** (p90 +2,110) | 45 % |
+     | Imensidão v1 | −0,056 s | **+1,544 s** (p90 +2,144) | 50 % |
+
+     Ou seja: **metade das legendas do canal aparecia 1–2 s antes de ser cantada**,
+     e a correlação é perfeita — o Rengoku, que escreve **uma linha por evento**,
+     é o único aprovado. Não era deriva de áudio, nem o corte da intro, nem o
+     `.ass` "perdendo o sincronismo".
+
+     O dado que resolve **já existia em todo projeto** e era usado só para acender
+     a palavra-chave: `palavras_vocal.json`. Ele é o relógio de TODA linha.
+
+     ```bash
+     cd ~/Documentos/Video_Studio/ferramentas
+     python3 estudio.py sincronia   <slug>   # porteiro: mede e REPROVA
+     python3 estudio.py sincronizar <slug>   # reescreve SÓ os tempos do .ass
+     ```
+     O `sincronizar` preserva estilo, posição, cor e animação de entrada, e faz o
+     pulso `\t(...)` da palavra-chave andar junto com o evento. Dupleto continua
+     empilhado na tela: a de cima **estende o fim** até o fim da de baixo, e a de
+     baixo **entra no tempo dela**. O visual do canal não muda; o relógio sim.
+
+     ⚠️ Linha que o ASR não ouviu sai com tempo **interpolado** entre as vizinhas e
+     é listada no relatório — confira essas à mão. E a regra do Álvaro continua de
+     pé: [linha sem confirmação dupla não vira legenda](#31).
+
+     🔴 **ESCREVER A RECEITA NÃO CONSERTA A FAIXA** *(medido em 05/09/2026)*. Esta
+     seção foi escrita em 04/09 às 21:48 e no dia seguinte o `sincronia` **reprovava
+     todas as faixas** — o `sincronizar` nunca tinha sido rodado em nenhuma. Consertadas
+     em 05/09 (akaza, imensidão, mahoraga, rengoku, sukuna, toji: p90 de até 1,654 s
+     para **≤ 0,005 s**), cada uma **no lugar**, com o original em `<nome>.ass.bak-dessincronizado-<data>`. ⚠️ **O `.ass`
+     consertado só vale depois de um render novo** — o master no ar tem o antigo
+     queimado. Rode o porteiro **antes** de renderizar, não depois de entregar.
+
+     ⚠️ **O Álvaro chama isto de "legenda atrasada"; medido, é ADIANTADA.** Não
+     "corrija" na direção que o relato sugere. Confirmado por três caminhos no Akaza
+     V6: onset de palavra do ASR **+0,635 s**, energia do stem de voz do Demucs (sem
+     ASR) **+0,390 s**, e o quadro entregue aos **24,30 s** mostrando `LUA SUPERIOR
+     TRÊS` enquanto se canta *"Olhe nos meus olhos"* (a palavra `três` só cai em
+     25,57 s). ⭐ **Por que parece atraso:** no dupleto as duas linhas entram juntas,
+     então quem olha vê **a próxima frase já escrita** e **não vê a que está
+     ouvindo**. A frase atual "não chegou" — sensação de atraso, mecanismo de
+     adiantamento.
+   - 🔴 **Desvio mediano acima de 3 s não é dessincronia: são arquivos de cortes
+     DIFERENTES.** O porteiro recusa e manda achar a transcrição certa. Foi o caso
+     do Muzan (`muzan_cinema_trimmed.ass` × `transcricao.json` do corte antigo,
+     +15,6 s). Reparar ali produziria lixo com cara de conserto.
+   - 🔴 **Três armadilhas do próprio `legenda.py`, consertadas em 05/09/2026 — não
+     as reintroduza ao mexer nele:**
+     1. **Desenho vetorial não é letra.** O filete das cartelas é um `Dialogue` com
+        `\p1` e corpo `m 0 0 l 420 0 l 420 3 l 0 3`. Ele entrava no alinhamento
+        (os tokens `M 0 0 L 420 …` disputando palavra com o ASR) e o `reparar` lhe
+        dava tempo **interpolado**, **soltando o filete da cartela que ele
+        sublinha**. Desenho não tem onset: é **seguidor** da fala que mais se
+        sobrepõe a ele.
+     2. **Refrão repetido ancora na repetição errada.** A DP é monótona e isso **não**
+        protege: no Rengoku, `SOB A FUMAÇA…` casou a **+21,3 s** e `DUZENTAS VIDAS…`
+        a **+22,6 s**, na 2ª passagem do refrão, porque o trecho à volta não ancorou.
+        Sem o descarte por mediana/MAD o `sincronizar` **gravaria** esses tempos.
+     3. **O porteiro fica cego em silêncio.** Com 4 nomes de relógio na lista, 5 dos
+        13 projetos respondiam `palavras=NAO ACHEI` e o QA simplesmente não
+        acontecia. Relógio se escolhe **medindo** o `.ass` contra todos os
+        candidatos, nunca pelo nome do arquivo.
    - O timestamp acompanha a **voz**. O corte visual pode ser aproximado do kick/ataque mais próximo
      sem deslocar a legenda junto.
 6. **Corte Narrativo Canônico e Específico (1:1):**
@@ -211,6 +285,12 @@ e `PIL` no python do sistema, fonte `Cinzel` em `~/.local/share/fonts`.
 
 Leia `references/sincronia-musical.md` antes de encurtar a música ou reajustar cortes ao beat.
 Ele define o mapa temporal único, a tolerância para snap visual e as provas mínimas de sincronia.
+
+🔴 **O `palavras_vocal.json` que sai daqui é o RELÓGIO DE TODA LINHA de legenda e de toda
+fronteira de plano** — não é só o dado que acende a palavra-chave. Foi tratá-lo como
+enfeite que produziu meia década de legenda 1–2 s adiantada (§5) e uma montagem
+metronômica fora do beat (§4d). Antes de entregar qualquer faixa:
+`python3 estudio.py sincronia <slug>` tem de dar **APROVADO**.
 
 Utilizar Faster-Whisper local com modelo `medium` ou `small` com `beam_size=5` e `word_timestamps=True` para evitar defasagem rítmica nas legendas:
 ```python
@@ -385,6 +465,118 @@ antes das duas emendas de −6,025 s e apontava 186 BPM. Refeito na trilha entre
 **140,05 BPM, compasso de 1,714 s**, erro mediano de 63 ms. O número se confirma sozinho —
 as linhas da letra estão espaçadas exatamente 1,714 s (30,000 → 31,714 → 33,429 …). Se a
 grade não explica o espaçamento da letra, a grade está errada.
+
+## 4d. A imagem troca no BEAT, não no dupleto *(medido em 04/09/2026)*
+
+O mesmo relógio errado da legenda estava na montagem: a tabela `PLANO` dos
+`render_vN.py` tem **uma fronteira de plano por dupleto de letra** — literalmente os
+mesmos números da tabela `LETRA` do `gerar_ass*.py`. Medido no "Imensidão do Vazio"
+(95 planos, 220 s, grade real de 136,05 BPM):
+
+| | montagem atual | uma fronteira por LINHA CANTADA, encaixada no beat |
+|---|---:|---:|
+| planos | 95 | 112 |
+| duração mediana | 2,17 s | 1,76 s |
+| **faixa dinâmica** (p90/p10) | **2,16×** | **3,25×** |
+| planos < 1 s / > 4 s | 1 / 1 | 21 / 7 |
+| na grade musical (≤ 50 ms) | **44/95** | **112/112** |
+| distância mediana ao beat | **55 ms** | **0 ms** |
+
+Dois defeitos, uma raiz:
+
+1. 🔴 **É um metrônomo.** 93 dos 95 planos duram entre 1 e 4 s. Não há rajada curta na
+   rima densa nem plano longo segurando o verso que pesa — a montagem não respira.
+2. 🔴 **O corte não cai no tempo forte.** Só 5 dos 95 caíam em downbeat. 107 ms fora do
+   beat a 136 BPM é **um quarto de tempo** — o olho não nomeia, mas sente que a imagem
+   não pulsa com a música.
+
+E a consequência direta do dupleto: **a segunda linha cantada nunca ganha imagem própria**,
+porque o plano foi cortado para o par inteiro.
+
+```bash
+python3 estudio.py ritmo <slug>            # grade da faixa + grade de corte sugerida
+python3 estudio.py ritmo <slug> --gravar   # grava projetos/<slug>/grade_corte.json
+```
+
+⭐ **A regra: a letra diz QUAL imagem, o beat diz QUANDO ela entra.** Uma fronteira por
+linha cantada, encaixada no beat mais próximo (downbeat na virada de ato, colcheia quando
+o verso é sincopado), dentro dos ±110 ms que a §"Cortes visuais versus voz" já autorizava.
+
+🔴 **Grade errada é pior que grade nenhuma.** O `ritmo` devolve uma `confiança`; abaixo de
+**0,25** ele **não encaixa nada** e deixa a fronteira no onset da voz — e diz isso na tela.
+Foi por não ter esse freio que a detecção antiga travava numa periodicidade pontuada de 3/2
+e devolvia 90,7 BPM para uma faixa de 140. O detector do `ritmo.py` é pente + prior de
+andamento (não `argmax` de autocorrelação, que premia qualquer periodicidade); confere 1:1
+com as grades conhecidas de Akaza (139,86 × 140,05), Mahoraga (143,89 × 143,67),
+Imensidão (136,05 × 136,00) e Inosuke (139,86 × 140,00).
+
+⚠️ A grade é **sugestão**. Quando mais de 30 % das fronteiras ficam abaixo de 1 s a
+ferramenta avisa: em flow denso isso é proposital, senão junte linhas vizinhas no mesmo
+plano. Quem manda no corte é o sentido do verso.
+
+## 4e. 🔴 O quadro entregue passa por porteiro — `estudio.py imagem` *(medido em 05/09/2026)*
+
+Regra do Álvaro: *"às vezes são colocadas imagens de telas pretas apenas com avisos
+ou até imagens não condizentes"*. Até 05/09 **nada media o vídeo final** — o estúdio
+media fonte (`blackdetect`, `pretos.json`), legenda e beat, e cada projeto reescrevia
+o seu próprio auditor à mão. Medido em todos os masters:
+
+| master | morto | quase-morto | congelado | página clara |
+|---|---:|---:|---:|---:|
+| **hakari** *(NO AR)* | **9,8 s (6,1 %)** | 13,3 s | 16,0 s | **39,7 s** |
+| **kashimo** *(NO AR)* | 2,7 s | 4,2 s | 11,5 s | **19,3 s** |
+| **muzan v5** *(NO AR)* | 3,2 s | **18,7 s (7,9 %)** | 21,7 s | 0 |
+| mahoraga v2 | **10,8 s (5,0 %)** | 15,7 s | 9,7 s | 0,8 s |
+| toji | **10,2 s (5,3 %)** | 11,5 s | **29,7 s (15,3 %)** | 0,2 s |
+| rengoku V2 | 2,8 s | 8,7 s | **39,0 s (17,4 %)** | 0 |
+| akaza V6 | **0,3 s (0,2 %)** | 3,8 s | 19,2 s | 3,7 s |
+
+O que a folha de contato mostrou e nenhuma métrica tinha dito:
+
+- **Tela preta com só a legenda escrita nela** — `hakari` 65,3 s (2,3 s), 19,5 s, 71,0 s;
+  `mahoraga` 32 s, 144 s, 146 s, 179 s, 217 s; `kashimo` 136 s.
+- 🔴 **`hakari` e `kashimo` são, em boa parte, slideshow de PÁGINA DE MANGÁ** em line-art
+  preto no branco (24,6 % e 19,3 s) — vários quadros são página quase branca com só a
+  legenda. A regra de pureza já proibia; nada media.
+- 🔴 **Cartela japonesa de terceiro em tela cheia** no `hakari`: `坐殺博徒` aos 12 s e 48 s,
+  `領域展開` aos 92 s.
+
+```bash
+python3 estudio.py imagem <slug>     # mede o master e grava a folha de suspeitos
+python3 estudio.py qa    <slug>      # UM portão: legenda + imagem
+```
+
+| medida | critério | reprova |
+|---|---|---|
+| `morto` | luz < 14 **e** detalhe < 16 | bloco ≥ 1,0 s, ou > 1 % do vídeo |
+| `quase-morto` | luz < 24 e detalhe < 22 | > 5 % |
+| `congelado` | diferença entre vizinhos < 0,8 por ≥ 1 s | > 6 % |
+| `página` | branco (>210) sem cor (sat < 0,12) em > 55 % do quadro | > 0,5 s |
+| `reuso` | hash igual (≤ 6 bits) a > 8 s, **com persistência** | avisa |
+| `descontinuidades` | `scene` do FFmpeg > 0,35 | avisa se faixa < 2,6× |
+
+🔴 **O porteiro roda dentro do `publicar.py`**, antes de abrir o navegador, em
+`youtube-longo`, `youtube-short`, `tiktok` e `instagram`. Master reprovado **não sobe**.
+A saída editorial é `--ignorar-qa`, que publica e **imprime o motivo** — a exceção fica
+no log em vez de virar hábito.
+
+⭐ **Ele não lê texto, e não finge ler.** Cartela de terceiro, marca d'água e legenda de
+dublagem se provam com o **olho**: todo relatório grava
+`projetos/<slug>/qa/imagem_suspeitos.png`, etiquetada em segundos. **A folha é a prova;
+o número é só o índice dela.**
+
+**Calibrações que custam tempo se refeitas:**
+- ⭐ **Não se detecta corte na amostragem de 6 fps.** Histograma e diferença média deram
+  **64/91 com 37 falsos** contra o `plano_v6.json` do Akaza. A 1/30 s (o `scene` do
+  FFmpeg) o corte volta a ser descontinuidade e o movimento de câmera volta a ser contínuo.
+- ⭐ **E o yardstick estava errado, não o detector:** das 91 fronteiras do manifesto,
+  **32 são cross-fade** (invisíveis de propósito). Sobre os 59 cortes secos ele acha **57**;
+  os "falsos" são cortes do próprio anime dentro do clipe. 🔴 Por isso o campo se chama
+  `descontinuidades`, não `planos` — **não case esse número com a contagem do render.**
+- ⭐ **Reuso exige persistência.** Sem exigir que o vizinho de 0,5 s também case, o `hakari`
+  acusava **186** reusos; com ela, **13** — e os 13 são reais.
+- 🔴 **`ffmpeg -ss` ANTES do `-i` zera o relógio que o filtro `subtitles` lê** e a legenda
+  some do quadro **sem erro nenhum**. Para conferir legenda num instante: `-copyts -ss <t> -i`.
 
 ## 5. Estado das faixas
 
