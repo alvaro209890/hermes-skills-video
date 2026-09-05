@@ -188,7 +188,11 @@ Sempre que uma operação de postagem, upload, checagem ou edição em qualquer
 plataforma (YouTube Studio, TikTok Studio, Instagram) for concluída ou
 encerrada, a aba correspondente **DEVE SER FECHADA IMEDIATAMENTE** no Chrome via
 CDP (`/json/close/<targetId>`, que exige **PUT**) para não acumular dezenas de
-abas pesadas e saturar a RAM. O `publicar.py` já fecha as abas que ele abre.
+abas pesadas e saturar a RAM. O `cdp.py` fecha sozinho, no fim da sessão, toda aba que o próprio `publicar.py`
+abriu — inclusive quando a execução termina por erro ou retorno antecipado
+(corrigido em 05/09/2026; antes disso nenhuma das 14 funções tinha `try/finally`).
+Aba obtida por `anexar()` **não** é fechada: ela é de outra tarefa. Se houver upload
+em andamento ou rascunho a conferir, marque com `pg.reter("motivo")` e ela sobrevive.
 
 Conversão Short→longo das três faixas auditadas:
 

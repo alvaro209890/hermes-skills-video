@@ -36,15 +36,23 @@ manda `SIGKILL` nele:
 hermes-gateway.service: Killing process 2301751 (chrome) with signal SIGKILL
 ```
 
-**Regra:** suba o Chrome **fora** do cgroup do gateway, de um shell próprio:
+**Regra (atualizada em 05/09/2026):** não suba Chrome à mão. Quem faz isso é o
+`navegador-frota`, um serviço systemd do usuário `acer` que roda **fora** do cgroup do
+gateway — o que resolve exatamente o `SIGKILL` acima — e abre o Chrome no display
+virtual `:99` (Xvfb), invisível no monitor.
 
 ```bash
-setsid nohup /opt/google/chrome/chrome --remote-debugging-port=9222 \
-  --remote-allow-origins=* --user-data-dir=/home/acer/.config/google-chrome-debug \
-  > /tmp/chrome_debug.log 2>&1 < /dev/null &
+# levanta (ou reaproveita) o Chrome de trabalho e devolve o CDP na 9222
+curl -s http://127.0.0.1:9222/json/version
 ```
 
-`DISPLAY` é obrigatório (`:0` no acer). Sem ele o Chrome sobe e não abre a porta.
+Para os corpos Hermes não há nada a fazer: cada perfil já tem `browser.cdp_url` apontando
+para a sua porta (9301–9314), e o navegador sobe sozinho na primeira conexão. Ver
+`navegador-frota estado` e `/home/acer/Documentos/navegador-frota/README.md`.
+
+> **Nunca** use `DISPLAY=:0` numa receita de automação: `:0` é a tela física do Acer, e
+> era daí que vinham as janelas aparecendo no monitor. `setsid`/`nohup` também não
+> substituem uma unidade systemd — não criam cgroup próprio.
 
 ## 3. `/json/new` exige **PUT**
 
