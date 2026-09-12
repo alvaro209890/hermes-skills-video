@@ -1,7 +1,7 @@
 ---
 name: amv-rap-geek
 description: "Crie AMVs de rap geek com narrativa e beat precisos."
-version: 2.2.0
+version: 2.4.0
 author: Álvaro (alvaro209890), Hermes Agent
 license: MIT
 platforms: [linux]
@@ -578,6 +578,273 @@ o número é só o índice dela.**
 - 🔴 **`ffmpeg -ss` ANTES do `-i` zera o relógio que o filtro `subtitles` lê** e a legenda
   some do quadro **sem erro nenhum**. Para conferir legenda num instante: `-copyts -ss <t> -i`.
 
+## 4f. 🔴 O porteiro de imagem NÃO lê texto — a varredura é `estudio.py texto` *(Inosuke V4, 06/09/2026)*
+
+O `estudio.py imagem` (§4e) mede preto, congelado, página e reuso. Ele **não lê texto, e
+diz isso de si mesmo**. Até 06/09 nada varria **legenda de fansub queimada no master** — e
+o buraco custou caro.
+
+**O que estava no ar:** o `inosuke_amv_v2_master_1080p.mp4`, salvo em `saidas/` desde
+04/09 e registrado no changelog como *"100 % de fontes puras"*, tinha **duas legendas em
+inglês queimadas**:
+
+| onde | plano | fonte | texto |
+|---|---|---|---|
+| 152,78 – 155,52 s | 78 | `cena_doma 393,5` | `Calm down.` e `Don't worry` |
+| 159,36 – 162,10 s | 81 | `cena_doma 324,5` | `What is this?` |
+
+As duas janelas **não estavam** em `JANELAS_PROIBIDAS`: o mapa que o
+`detectar_legendas.py` gerou para a `cena_doma` tem buracos (47 janelas proibidas em 530 s
+e ainda passou).
+
+### 🔴 Dois detectores automáticos foram construídos e os DOIS reprovaram
+
+Isto está aqui para ninguém tentar de novo. Os controles positivos foram
+`cena_doma` em 357,5 s / 232,5 s e, depois, os dois trechos do próprio picture lock.
+
+| tentativa | resultado no controle |
+|---|---|
+| pixel quase-branco **com vizinho escuro** (a assinatura do contorno de legenda) | positivos: 261 e 213 px · negativos limpos: **518** e 252. **Não separa** — line-art de anime *é* branco com contorno preto |
+| o mesmo + **estabilidade temporal** (texto fica parado, desenho se mexe) | achou o `What is this?` mas **perdeu o `Calm down.`**; 25 suspeitos, pico de 8101 em plano sem texto |
+
+Vale a mesma regra do §4e: **a folha é a prova, o número é só o índice dela** — só que
+aqui não existe nem número que preste. Então a ferramenta gera **só a folha**.
+
+### A ferramenta
+
+```bash
+python3 estudio.py texto <slug>                 # as duas faixas, no picture lock
+python3 estudio.py texto <slug> --faixa baixo   # só o rodapé
+python3 estudio.py texto <slug> --arquivo X.mp4
+```
+
+Módulo em `ferramentas/texto.py`. O que ela faz: recorta **a faixa onde o texto mora**,
+amplia até ficar legível, escreve **o segundo em cada quadro** e monta as folhas.
+
+| faixa | recorte | o que já pegou |
+|---|---|---|
+| `baixo` | `1920×300` a partir de `y=780` | legenda de fansub, assinatura de editor (`Denji Suke`, `Calm down.`) |
+| `alto` | `1920×240` a partir de `y=0` | banner de streaming, **nome de técnica** (`Sixth Fang…` da `cena_gyutaro_limpa`) — a faixa que o `detectar_legendas.py` nunca varreu |
+
+Amostra a **2 quadros/s** (legenda de fansub dura ~1,5 s, não escapa) e miniatura de
+**640 px** de largura — abaixo disso o texto some. 13 folhas para 222 s.
+
+⚠️ **Rode no PICTURE LOCK, não no master**: no master a legenda da própria música ocupa a
+mesma faixa de baixo. O comando escolhe o lock sozinho quando existe.
+
+Validado nos dois sentidos: no lock da V3 ela mostra `Calm down.` em **153,0 s** e
+`What is this?` em **161,5 s**; no lock da V4, limpo.
+
+### 🔴 Duas armadilhas do FFmpeg que a ferramenta contorna — e você também precisa
+
+**a. Em picture lock feito por `concat -c copy`, o `-ss` ANTES do `-i` MENTE.**
+Três folhas pedidas em `-ss 126`, `-ss 144` e `-ss 162` saíram **idênticas**. Não é o mesmo
+problema do §4e (lá o `-ss` zera o relógio que o filtro `subtitles` lê); aqui **o conteúdo
+devolvido está errado**. Decodifique em **uma passada, sem seek**, com saída numerada. Para
+quadro avulso nesses arquivos use seek de saída (`-i arq -ss t`) — lento, mas honesto. No
+**master** (reencodado) o seek de entrada funciona normal.
+
+**b. `-vf tile` montando as folhas direto no ffmpeg PULOU 18 s.** Duas folhas vizinhas
+saíram byte a byte idênticas (07 == 08 de 13) — ou seja, dezoito segundos ficaram sem
+inspeção nenhuma. Por isso a montagem é feita em PIL a partir dos quadros numerados, e o
+relatório imprime **`cobertura: OK — todo quadro entrou em uma folha`**. Se essa linha não
+aparecer, a varredura não vale.
+
+> Isto soma-se ao que o §4c já avisava (`tile` com `-update 1` exige `-frames:v 1`).
+> Resumo: **não confie no `tile` para segmentar tempo.**
+
+---
+
+## 4g. Legenda: três consertos medidos no Inosuke *(06/09/2026)*
+
+### a. A cor de plano B tem um segundo caso — e uma regra de ouro
+
+O Akaza (§4b/§13 do vault) descobriu que a cor da aura some quando a **aura também está no
+fundo**. O Inosuke repetiu exatamente: aos **49,6 s** o título `SÉTIMA PRESA NO AR` saía em
+ciano `#00D2FF` **em cima da própria Respiração da Fera**, que é ciana e toma a tela.
+
+⭐ **A segunda cor não é decoração, é seguro.** Amostre-a junto com a aura, no mesmo dia, e
+guarde as duas no `projeto.json` (`cor.destaque` e `cor.destaque_plano_b`).
+
+| personagem | aura | plano B | de onde saiu o plano B |
+|---|---|---|---|
+| Akaza | `#68C8F8` | `#F6BA06` | o ouro dos olhos de Lua Superior Três |
+| **Inosuke** | `#00D2FF` | **`#F09018`** | o âmbar do pelo de javali e das lanternas do Distrito (`raw_4k60 @40 s`, sat 0,90 / brilho 0,94) |
+
+Critério (o mesmo do Akaza): mede-se **na faixa onde a legenda vai cair** a fração de pixel
+na cor da aura e a luz média; troca se `aura > 0,18` ou (`luz > 150` e `aura > 0,08`).
+Escolha um plano B **complementar** da aura — âmbar contra ciano é contraste máximo.
+
+### b. 🔴 A histerese de posição vira cola sem uma segunda ressalva
+
+A regra do Akaza já tinha uma guarda ("se o rodapé JÁ É a melhor faixa, estar cheio não é
+motivo para sair dele"). Falta**va** a outra: na primeira medição do Inosuke, **30 das 73
+linhas ficaram presas no topo** depois de UMA linha que precisou subir — o refrão inteiro
+saiu do rodapé, que é onde ele mora.
+
+**A histerese só pode valer quando a regra já mandou sair do padrão.** Se a regra diz
+rodapé, vai para o rodapé, ponto. Com a ressalva: `rodapé 60 · rodapé-esq 2 · topo 7 ·
+topo-esq 4`.
+
+### c. Casar a palavra-chave: aceite qualquer palavra da expressão
+
+O Gojo estabeleceu que a palavra-chave acende no tempo do Whisper `large-v3` rodado no
+vocal isolado pelo Demucs. Medido no Inosuke: casar só a **primeira** palavra da expressão
+dá **31 de 73** linhas; aceitar **qualquer** palavra da mesma expressão sobe para
+**35 de 73**. Quando o Whisper erra justamente a primeira, a seguinte está no mesmo compasso
+e serve igual.
+
+### d. Miudezas que mudam a leitura
+
+- **`Fala` e `Verso` sem negrito leem como fansub.** Cinzel 56/58 no canto não é cartaz de
+  canal. Vá para negrito e corpo maior (62/64). O `Grito` foi de 86 para **104** — é um
+  berro, tem que ocupar.
+- **O `Grito` não pode sair com a linha inteira em destaque.** `SAI DO CAMINHO!` estava
+  100 % ciano, o que é karaokê, não o padrão da casa. Vire `SAI DO <<CAMINHO!>>`.
+
+---
+
+## 4h. Dois defeitos que nenhum validador pega *(Inosuke V4, 06/09/2026)*
+
+**a. Planos repetidos com janela diferente.** O validador recusa *janela de fonte* usada
+duas vezes — mas os planos 49, 50, 51 e 52 do Inosuke usavam janelas **diferentes do mesmo
+plano de câmera**: 7,5 s seguidos com o mesmo enquadramento (braços abertos no escuro), e
+nenhum deles dizia o que o verso dizia. **Só a folha de contato dos meios de plano pega
+isso** — um quadro do meio de cada plano, tudo em folha, olhado de uma vez.
+
+**b. `whip` de 2 quadros com raio 44 passa por corte seco.** Na folha dos meios de
+transição, vários whips do Inosuke eram indistinguíveis de corte. Vire **3 quadros em duas
+etapas** (`boxblur` raio 104 nos 2 primeiros, 46 no terceiro). Aí lê como chicote sem virar
+o `hblur` ilegível do §4b.
+
+## 4i. 🔴 O motor de efeitos é `ferramentas/efeitos.py` — não copie render *(12/09/2026)*
+
+**A doença dos scripts descartáveis tinha um terceiro surto, no render.** A regra
+da casa ("conserte a ferramenta, não escreva outro script") valia para capa, corte
+e QA e **não valia para o render**: o vocabulário mais avançado do canal — flash
+como camada, pulso de zoom na batida, tremor no refrão, `rgbashift`, bloom, grade
+por ato — existia em UM arquivo, `projetos/zoro/render_zoro_turbinado.py`, que por
+sua vez era *gerado* por um script de busca-e-troca em cima de outro render. Asta,
+Sung, Yoriichi, Shinobu e Inosuke nunca receberam nada disso.
+
+```python
+import sys; sys.path.insert(0, "/home/acer/Documentos/Video_Studio/ferramentas")
+import efeitos
+```
+
+| peça | o que dá |
+|---|---|
+| `camera(tipo, n, fps, pulso=, tremor_extra=, desloca=)` | movimento em **subpixel**: `parado`, `respiro`, `push`, `push_forte`, `pull`, `punch`, `tremor`, `punch_tremor`, `giro_dir/esq`, `varre_dir/esq` |
+| `velocidade(k0, k1, dur)` | **rampa de velocidade** + a duração de saída que ela gera |
+| `RAMPA` | receitas: `impacto` (entra rápido e trava no golpe), `arranque`, `freia`, `solta` |
+| `camada(tipo, fps, aura)` | flash/dip como camada de alpha caindo |
+| `whip(fps)`, `XFADE`, `dur_transicao` | varredura em 3 quadros · xfade tipado |
+| `pulso_batida`, `tremor_batida` | zoom e sacudida presos à grade musical |
+| `grade_casa(aura, forca, calor)` | o **banho único** que faz 30 fontes virarem um filme |
+| `acabamento(bloom, vinheta, grao)` | bloom · vinheta (tabela **medida**) · grão |
+| `linhas_velocidade`, `sobrepor_linhas` | folha de linhas de mangá, **gerada por nós** |
+
+Prova de regressão: `python3 ferramentas/provar_efeitos.py` (25 provas). Ela roda
+duas classes — *o FFmpeg aceita?* e *o número da saída mudou?*. ⚠️ Só a primeira é
+teatro: filtro que o FFmpeg **aceita e ignora** (parâmetro fixo recebendo
+expressão, como `colorchannelmixer=aa='expr'`) não dá erro, só não aparece na tela.
+
+#### 🔴 O JUDDER: a câmera do canal andava aos trancos, em todo vídeo publicado
+
+`zoompan` trunca a origem do corte em **pixel inteiro da fonte**. Controle com a
+fonte **parada** (um PNG em loop — todo movimento medido é invenção do render):
+
+| cadeia | tremor |
+|---|---|
+| `zoompan` (o de sempre) | **0,135** |
+| supersample 2,2x | 0,002 |
+| **`perspective` subpixel** | **0,001** |
+
+O nosso `push` numa imagem **parada** treme mais (0,135) que o filme inteiro da
+referência com movimento real (0,040). Conserto: `perspective` com `sense=source`
+e `eval=frame` — os quatro cantos dizem que região da fonte vira o quadro, em
+ponto flutuante. Custa +15 % de render, detalhe medido idêntico (19,11 × 19,13), e
+faz o que o `zoompan` nunca fez: **girar** a câmera (`giro_dir`/`giro_esq`).
+
+## 4j. A régua de estilo: `estudio.py estilo <slug>` *(12/09/2026)*
+
+Mede a nossa montagem contra os dois vídeos da RM RAPS que o Álvaro usa como
+referência — "Além do Sangue | CHOSO" (`gLbTrypXJPg`) e "Ecolocalização | Tengen
+Uzui" (`jhjNpTzuLtE`), guardados em `refs/rmraps/`. **Não reprova**: quem reprova é
+`imagem`, `texto` e `transicao`. Estilo é escolha do Álvaro.
+
+| medida | Zoro V3 | Choso | Tengen |
+|---|---|---|---|
+| corte/min | 42,8 | 75,6 | 65,2 |
+| plano mediano (s) | 1,23 | 0,62 | 0,53 |
+| planos com rampa (%) | 2,6 | 26,2 | 32,4 |
+| oscilação de luz | 35,8 | 74,8 | 50,3 |
+| contraste no quadro | 53,6 | 52,2 | 56,2 |
+| desvio de vermelho (%) | +1,1 | **+16,4** | **+16,4** |
+| vinheta | 0,653 | 0,86 | 0,753 |
+
+⭐ **Duas referências, não uma — e só entra na régua o que as DUAS confirmam.**
+A saturação deu 0,289 num e 0,467 no outro: é a cor do anime, não a mão do editor,
+e ficou de fora. O mesmo controle impediu de "consertar" o grão (o 0,0 do Choso é
+o encode dele). **Controle positivo vale para régua de estilo tanto quanto para
+detector de marca d'água.**
+
+⭐ **O banho de cor é do editor, não do anime:** +16,4 % de vermelho e ~-10,5 % de
+azul nos **dois** — um vídeo de sangue e um de festival, paletas opostas, o mesmo
+número. Nós estamos em +1,1 %: cada plano guarda a paleta da própria fonte, e é por
+isso que o vídeo lê como colagem de clipes em vez de um filme. `grade_casa()`
+fecha isso (medido: +17 pontos de vermelho, −6 de azul, que é o tamanho do buraco).
+Copie o **método** (banho único, quente), nunca o **tom** do Choso.
+
+🔴 **`contraste_quadro` e `oscilacao_luz` NÃO são a mesma coisa.** A primeira versão
+desta régua chamava as duas de "contraste", mostrou 35,8 contra 62,6, e eu ia
+empurrar contraste na grade — **consertar o que não estava quebrado**. O contraste
+*dentro* do quadro já está no alvo (53,6 × 52,2 × 56,2). O que falta é o filme
+**balançar** do escuro ao claro ao longo do tempo, e isso é **montagem**: aplicar a
+grade inteira mexeu o número de 27,6 para 26,7.
+
+⚠️ **A vinheta: ângulo MAIOR = mais pesada** (o contrário do que parece). Tabela
+medida: `PI/12` −0,025 · `PI/8` −0,057 · `PI/6` −0,095 · `PI/5` −0,130 · `PI/4`
+−0,184. A cadeia antiga usava `PI/5.2` e o bloom por cima: −0,164 no total, e é
+exatamente por isso que o Zoro V3 mede 0,653 contra 0,75–0,86 das referências. O
+padrão agora é `vinheta="tenue"`. ⚠️ E a medida **absoluta** de vinheta depende do
+conteúdo (plano de masmorra já nasce com a borda escura) — o que se escolhe é o
+**delta**.
+
+⚠️ **Rampa de velocidade é o efeito que mais falta**: 1 em cada 3 planos da
+referência muda de velocidade dentro do corte; nós usávamos em 2,6 %. Ao usar,
+lembre que a duração de saída vira `dur_fonte × (k0+k1)/2` — **quem monta o plano
+precisa usar esse número, senão o corte sai da batida.**
+
+⚠️ **"Câmera sempre andando" NÃO é regra deles**: o Tengen tem 42 % do tempo em
+plano parado e o Choso 0,5 %. O que os dois têm é **contraste** entre parado e
+movendo. Nós temos 0,0 % de plano parado — que é outra monotonia. Por isso
+`camera("parado")` agora é mesmo parado, e o push lento de 5,5 % virou `respiro`.
+
+#### 🔴 Pendência aberta: o vazio declarado
+
+A referência usa **quadro quase preto com só a letra na tela** — é isso que dá a
+oscilação de luz dela. O nosso `imagem.py` **reprova bloco morto ≥ 1 s**, porque
+foi feito para pegar preto **acidental** (fade da fonte vazando no corte). Para ter
+o vazio de propósito sem perder a guarda, o plano precisa **declarar** o vazio:
+intenção declarada passa, acidente reprova. Enquanto isso não existir,
+`oscilacao_luz` não fecha e a régua vai continuar cobrando.
+
+## 4k. Composição inventada por trecho (12/09/2026)
+
+O Álvaro pediu efeitos e animações que a IA invente a partir da **letra e do
+personagem**. Referências são inspiração, não modelos para reproduzir nem metas
+obrigatórias de cor, quantidade de efeitos ou fps.
+
+Leia [references/composicao-criativa.md](references/composicao-criativa.md) ao
+planejar quadrinhos, texturas, partículas, cartelas e combinações de efeitos.
+Use `estudio.py compor` para uma proposta inicial e revise as receitas com intenção
+narrativa; o léxico é heurístico e não substitui a escolha da IA. Use
+`estudio.py render-composicao` para renderizar as peças revisadas com duração exata.
+Os módulos comuns são `camadas.py` e `composicao.py`; amplie-os para novas ideias.
+Transições entre peças e o áudio continuam na montagem final. Inspecione o vídeo
+codificado ao longo do tempo; uma folha de PNGs não comprova animação.
+
 ## 5. Estado das faixas
 
 | Faixa | Versão final | Arquivo |
@@ -587,6 +854,12 @@ o número é só o índice dela.**
 | **Ryomen Sukuna — O Rei das Maldições** | **PUBLICADO** — `youtu.be/fG3g99jXts8` | `saidas/sukuna_amv_oficial_master_1080p.mp4` |
 | **Satoru Gojo — Imensidão do Vazio** | **Master v2 02/09/2026 — FECHADO, não publicado** (prévia 9:16 no ar) | `projetos/imensidao-vazio/saidas/imensidao_vazio_gojo_v2_master_1080p.mp4` |
 | **Akaza** (Demon Slayer) | **V6 03/09/2026 — FECHADO, não publicado** | `projetos/akaza/saidas/akaza_amv_v6_master_1080p.mp4` (2:59) |
+| **Inosuke Hashibira — O Deus da Montanha** | **V4 06/09/2026 — FECHADO, não publicado** (prévia 9:16 no ar) | `projetos/inosuke/saidas/inosuke_amv_v4_master_1080p.mp4` (3:42) |
+
+🔴 **Inosuke: use a V4, nunca a V1 nem a V2.** A V1 tem a cartela de crédito do editor
+`@baseking99` aos 17,5 s; a **V2 tem duas legendas em inglês queimadas** (§4f) — e estava
+registrada no changelog como "100 % de fontes puras". A prévia de 34 s já publicada nas
+três redes sai de 140–174 s, **antes** do primeiro trecho contaminado, e continua limpa.
 
 ⚠️ **Akaza: use a V6, não a V3/V5.** As duas anteriores saíram com as 21 transições em `xfade=dissolve` (chuvisco de pixel aleatório — §4b) e a V5 ainda trocou a Cinzel por Impact. A V6 tem o mesmo áudio e a mesma montagem verificada, com transições, legendas e outro corrigidos. Evidência em `projetos/akaza/revision_v6_20260903/`.
 
