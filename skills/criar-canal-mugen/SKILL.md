@@ -164,6 +164,14 @@ quadro morto só revela que não havia imagem ali.
   `estudio.py` também acha `*_lock.mp4`).
 - No Naruto v4 a faixa `alto` do `texto` achou duas marcas d'água que estavam no ar (§4n).
 
+## Regra 05 — estado de publicação tem vocabulário, e NAO_PUBLICADOS é gerada *(17/09/2026)*
+
+- `publicado.estado` ∈ `rascunho` · `nao_publicado` · `previa_publicada` · `publicado` · `bloqueado`.
+  O detalhe vai em `publicado.nota` — o `validar()` reprova texto livre.
+- `python3 estudio.py nao-publicados --aplicar` refaz `NAO_PUBLICADOS/` a partir dos manifestos
+  (links para o master e as artes). Não mexa na pasta à mão: mude o manifesto e gere de novo.
+- Versão final aprovada vai no bloco `versao` do manifesto (`final: true` + a prova).
+
 ## Regra 01 — o manifesto é a fonte da verdade
 
 Cada faixa tem `projetos/<slug>/projeto.json`: cor amostrada, frames

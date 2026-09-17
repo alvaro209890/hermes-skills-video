@@ -1,7 +1,7 @@
 ---
 name: amv-rap-geek
 description: "Crie AMVs de rap geek com narrativa e beat precisos."
-version: 2.6.2
+version: 2.7.0
 author: Álvaro (alvaro209890), Hermes Agent
 license: MIT
 platforms: [linux]
@@ -1096,11 +1096,19 @@ sem código novo — ver `projetos/naruto-monstro/construir.py`, funções `efei
 
 Régua (`estudio.py estilo`): 55,9 cortes/min, plano mediano 1,0 s, luz média 122 → 108, preto
 10,2 → 13,6 %. O desvio de azul (−20,7 %) é o laranja da fonte: `calor` não move esse número.
-O `transicao` reprovou 5 apagões > 0,6 s que são planos do próprio anime (conferidos na folha) —
-as referências da RM RAPS reprovariam também (48 e 37/min). ⏭️ O portão precisa aceitar
-`vazios_declarados` ou olhar a variação temporal.
+O `transicao` reprovava 5 apagões > 0,6 s que são planos do próprio anime (conferidos na folha).
+✅ **Consertado em 17/09:** o portão lê o `<lock>.mp4.json` que o motor grava — apagão longo **fora**
+das transições e **com imagem** vira aviso; transição longa do plano, preto/cartão segurado e
+lock sem `.json` continuam reprovando; `vazios_declarados` do manifesto é respeitado.
+Movimento sozinho não separava (dois daqueles planos são escuros e quase parados). Prova:
+`python3 ferramentas/provar_transicao.py` (5 casos sintéticos) + Zoro V2 ainda reprova (20,1/min).
 
-## 4m-bis. ⭐ A v4 do Naruto é o PADRÃO aprovado *(Álvaro, 17/09/2026: "ficou muito boa")*
+## 4m-bis. ⭐ A v4 do Naruto é o PADRÃO aprovado — e a versão FINAL *(Álvaro, 17/09/2026: "ficou muito boa", "essa é a final")*
+
+Prova da final: o Álvaro encaminhou o vídeo ao número do Hermes e o arquivo recebido
+(`~/.hermes/document_cache/`) tem o mesmo SHA-256 da versão de WhatsApp da v4 (`8b7fe7c1…`).
+⭐ **Para saber qual vídeo o Álvaro está chamando de "esse", peça que ele encaminhe ao Hermes e
+compare o hash** — a ponte do WhatsApp não guarda o histórico do que foi enviado.
 
 Faixa nova já nasce assim: relógio por palavra → efeitos por chave de plano → amostra de um
 refrão → lock → legenda cinética → portões → `publicar.py whatsapp`. A ordem, o que dá a cara
