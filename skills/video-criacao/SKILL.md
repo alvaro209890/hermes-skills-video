@@ -36,6 +36,12 @@ export 9:16 e 16:9 — e entrega o arquivo como anexo no WhatsApp. O Álvaro **n
 - "transforma esse áudio/texto em vídeo" (nota de voz ou documento no chat)
 - Por `hermes cron`: pauta semanal recorrente
 
+⚠️ **AMV do canal MUGEN RAPS não é esta skill.** Música do canal + anime = skill
+`creative/amv-rap-geek`, com as ferramentas do `~/Documentos/Video_Studio` (`estudio.py` cria,
+`publicar.py` publica). O padrão aprovado pelo Álvaro em 17/09/2026 é a **v4 do Naruto**: legenda
+cinética palavra por palavra (`ferramentas/legenda_cinetica.py`), **sem** karaokê `\k`, e efeitos
+por chave de plano. O `.ass` karaokê desta skill vale para reel/short genérico.
+
 ## Fluxo resumido
 
 Detalhe passo a passo em **PLANO_HERMES.md §2.3**. Resumo:

@@ -165,3 +165,36 @@ A varredura do picture lock deu **3 suspeitos em 449 quadros** e os três eram o
 kanji **上弦 / 参** nos olhos do Akaza — arte do próprio anime. Confirma a §5:
 **kanji nativo não é legenda de terceiro**. O detector não sabe a diferença; quem
 sabe é quem olha o quadro.
+
+## 9. Legenda de fansub numa faixa fixa: corte num ARQUIVO DERIVADO *(Doma, 14/09/2026)*
+
+`composicao.renderizar()` só faz letterbox — **não há crop por plano**. Quando a fonte tem
+legenda queimada numa faixa fixa, meça a tinta em strips 1920×300 de várias amostras e gere
+`fontes/<nome>_limpo.mp4` uma vez, antes do plano (`projetos/doma/limpar_fontes.py`, com
+escrita atômica e decode no fim):
+
+| Fonte | Faixa suja | Filtro |
+| :--- | :--- | :--- |
+| `M12hQhBAHHQ` (Kanao e Inosuke × Doma) → `paneu_limpo` | legenda EN em y 955–1040 | `crop=1920:940:0:0,scale=2206:1080:flags=lanczos,crop=1920:1080:143:0` |
+| `8wcr1j9n7aM` (Kotoha no rio) → `kotoha_limpo` | banner + legenda | `crop=1280:608:0:28,scale=2274:1080:flags=lanczos,crop=1920:1080:177:0,unsharp=5:5:0.8:5:5:0.2` |
+
+⚠️ Rode na **CPU do acer**: a volta pela RTX 3050 foi a ~20 MB/min.
+⚠️ A tabela de janelas herdada do projeto Inosuke deixava legenda passar dentro de janela
+"limpa" — janela herdada é hipótese, não medição.
+
+## 10. Mapa de contaminação — projeto `doma` (auditado 14/09/2026)
+
+| Fonte | O que tem | Destino |
+| :--- | :--- | :--- |
+| `new_s2` (`-k9Vxt_tZfc`) | 🔴 cartela `TWIXTOR DOWNLOAD LINK IN DESCRIPTION / SORRY FOR NO PREVIEW` sobre imagem borrada, **no meio do arquivo** | barrada (vazou em 4 planos do 1º lock) |
+| `new_raw1` | marca `FLUKE` | descartada |
+| `new_raw2` | cartela + moldura | descartada |
+| `new_short` | texto gigante de editor | descartada |
+| `new_raw_long` | `DOWNLOAD THE SCENE…` queimado | descartada (o conteúdo existe limpo na `cena_lua2`) |
+| `nl_part2`, `nl_part6` | marca `NANLEB` fixa + legenda | descartadas |
+| `mg_twixtor`, `mg_shinobu` | mangá com texto de editor | descartados |
+| `cena_lua2` (`qtD8pbO6J5w`) | `4K CC` 0–1,3 s; cartela `4K` + preto 71,8–76,6 s; **repete trecho por dentro** (48 s = 122 s) | usada, com janelas proibidas |
+| `cena_lua2d` (`Zss7nhGgIMs`) | disclaimer 0–3 s | usada |
+| `cena_doma4` | cartela 0–5,5 s; `THANKS FOR WATCHING` 130,8–134,3 s | usada |
+| `cena_doma7` | `絶賛公開中` do trailer em 19–21,6 s | usada |
+| `new_best` (`4MW8Yqzzi6A`) | limpa inteira | usada |

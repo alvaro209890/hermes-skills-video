@@ -1,7 +1,7 @@
 ---
 name: amv-rap-geek
 description: "Crie AMVs de rap geek com narrativa e beat precisos."
-version: 2.4.0
+version: 2.6.2
 author: Álvaro (alvaro209890), Hermes Agent
 license: MIT
 platforms: [linux]
@@ -14,6 +14,14 @@ metadata:
 # amv-rap-geek
 
 Guia executável para criação e montagem de videoclipes musicais e AMVs de Rap Geek (estilo RM Raps / MUGEN RAPS) a partir de áudio, transcrição e clipes brutos de anime.
+
+## When to Use / Quando usar
+
+- O Álvaro manda uma música (mp3/wav do Suno ou Mureka) e pede AMV, legenda, remontagem ou "melhora".
+- Retomar/consertar AMV de outro agente (Codex, Claude do Windows, outro corpo do Hermes).
+- Antes de publicar: os portões (`estudio.py qa`, `texto`, `transicao`, `estilo`) moram aqui.
+- Publicar é a skill `publicar-canal-mugen`; capa e corte vertical são `criar-canal-mugen`.
+- Tudo roda no acer, em `~/Documentos/Video_Studio` (quem está em outro PC entra por `ssh acer`).
 
 ## 1. Estrutura do Projeto
 
@@ -34,6 +42,8 @@ projetos/<slug>/
    ⚠️ **Nome de arquivo e título do vídeo não são prova.** Fontes que se anunciam como clipe do
    anime podem ser animação vetorial de fã (`wWi5gVmXfmY` = "Guii Animz Presents") ou compilação
    com outros animes. Audite frame a frame — 1 fps em folha de contato — antes de montar.
+   📌 **Mangá só entra ANIMADO** (ordem do Álvaro, 14/09/2026): twixtor ou animação com câmera,
+   nunca página parada. Edit de terceiro com texto de editor sobreposto continua descartado.
 2. 🔴 **Zero Marcas d'Água E Zero Legenda de Dublagem:** nenhum clipe sai com marca de canal
    nem com legenda de dublagem de terceiro — só ficam as legendas da MÚSICA (o `.ass`).
    A fonte sai limpa **antes** de entrar na montagem. **Três técnicas, uma só não resolve:**
@@ -159,7 +169,7 @@ projetos/<slug>/
      contra **3,8** no topo. Regras: o rodapé é o padrão e só se sai dele se estiver mesmo
      ocupado (detalhe > 13, ou 1,6× pior que a melhor com diferença > 4); 🔴 **se o rodapé já
      É a melhor faixa, "estar cheio" não é motivo para sair**; histerese para não pular de
-     posição a cada verso; e reforce o `ord` de 3,8 para 5,2 quando a faixa tiver `luz > 150`.
+     posição a cada verso; e reforce o `\bord` de 3,8 para 5,2 quando a faixa tiver `luz > 150`.
    - 🔴 **`WrapStyle 2` não quebra linha: linha larga demais é CORTADA sem aviso.** Estime a
      largura (`nº de caracteres × (corpo × 0,62 + fsp)`) contra os 1740 px úteis e **encolha o
      corpo até caber**. Perder texto é pior que perder 4 % de corpo.
@@ -280,6 +290,34 @@ de 185 s a 500 Hz). Autocorrelação por FFT resolve em milissegundos:
 Existe: `ffmpeg`/`ffprobe` com VAAPI, `yt-dlp` novo em `~/.local/bin` (o do apt está
 quebrado), `faster-whisper` no `.venv_whisper`, `demucs` no `.venv_demucs`, `numpy`
 e `PIL` no python do sistema, fonte `Cinzel` em `~/.local/share/fonts`.
+
+### 2z-bis. Operação: retomada, GPU e shell remoto *(Doma, 14/09/2026)*
+
+- **Retomar sessão do Codex que parou no limite:** o transcrito fica em
+  `C:\Users\Usuario\.codex\sessions\AAAA\MM\DD\rollout-*.jsonl` (ache por `grep` do nome do
+  arquivo anexado). Depois da compactação só sobra resumo cifrado — **o estado real está no
+  disco do acer** (`projetos/<slug>/`); confira lá antes de acreditar na última frase.
+- 🔴 **RTX 3050 (`render_dispatch.py`): o gargalo é a rede, não a GPU.** A volta Windows→acer
+  andou a **~20 MB/min** (1,56 GB = mais de uma hora de scp, contra ~3 min de libx264 veryfast
+  no acer); a ida acer→Windows mede ~4 MB/s. A composição do estúdio é filtro por plano em CPU
+  (`perspective`, camadas, transições) — migrar a montagem para o Windows (Ryzen 5 5500,
+  6c/12t) não compensa: o acer fez 128 planos em ~19 min. Só despache o que trafega pequeno.
+  Whisper CUDA no Windows falha sem `cublas64_12.dll`.
+- 🔴 **`ssh acer 'pkill -f pipeline_v2.sh; …'` mata a própria sessão ssh** (a linha dela contém
+  o texto), e `bash -c 'while pgrep -f render_doma.py; do sleep 30; done'` **nunca termina**
+  (o pgrep casa com o próprio `bash -c`). Use `pgrep -f "[r]ender_doma.py"` ou um script que
+  filtra o próprio PID (`projetos/doma/relancar_doma.sh`). Mesmo defeito do §4 de
+  `references/publicar-tiktok-cdp.md`.
+
+### 2z-ter. Editar arquivo do acer a partir do Windows *(Naruto v4, 16–17/09/2026)*
+
+- 🔴 **Heredoc por `ssh` come barra invertida** (`\f` virou form feed dentro de um `.py`). Arquivo
+  com `\` vai por `scp`, nunca por `cat << EOF` remoto.
+- 🔴 **Python no Windows grava CRLF.** Seis arquivos do projeto e o changelog do vault foram para o
+  acer com CRLF e o diff saiu com o arquivo inteiro. Confira com `file <arq>` e converta com
+  `sed -i 's/\r$//'` antes de commitar (o `plano.json` saiu idêntico depois da conversão).
+- Agentes paralelos morrem juntos no limite de sessão: quando o Álvaro disser "sem subagentes",
+  faça em série e registre o estado no disco a cada etapa.
 
 ## 3. Transcrição & Alinhamento Temporal de Alta Precisão
 
@@ -414,6 +452,21 @@ na tela é assinado pelo Álvaro.
    Não baixe o bitrate do áudio do WhatsApp para "caber": o arquivo é dominado
    pelo vídeo (o do Sukuna ficou em 56 MB com AAC 256k) e 128k só devolve o
    clipping. Alvo de entrega: **−10 a −11 LUFS, TP ≤ −1.0 dBTP**.
+
+   🔴 **A versão leve não sai do AAC do master** *(Doma, 14/09/2026)*. Reencodar o AAC 320k
+   do master para 160k deu **+0,3 dBTP** com o master em −1,0. Gere a trilha da versão leve do
+   **WAV masterizado**, com folga para o overshoot do bitrate menor (`volume=-1.5dB` → −13,2
+   LUFS / −1,3 dBTP; `projetos/doma/render_doma.py zap`), e meça as duas vias.
+
+8. 🔴 **Entrega no WhatsApp: `publicar.py whatsapp`** *(Naruto v4, 16/09/2026)*.
+   `python3 publicar.py whatsapp ARQ --legenda "..." [--recibo recibo.json]` — destino **fixo**
+   no WhatsApp pessoal do Álvaro (o chip do Hermes nunca manda para terceiro), confere o
+   `/health` do bridge, calcula o hash e grava o recibo. Recibo `success=true` prova **envio**,
+   não leitura. Não escreva `enviar_whatsapp_<coisa>.py` — era a mesma doença dos 40 scripts
+   de postagem.
+   ⚠️ O bridge engasga acima de **~55 MB** (`sendMessage timed out after 60s` com 69 MB na
+   Shinobu). Versão leve: **CRF 29 / maxrate 1700k** ≈ 48 MB para 3m40s, trilha tirada do WAV
+   masterizado (item 7).
 
    ⚠️ Kashimo, Hakari e Muzan **já estão no ar com o áudio estourado**. A
    correção é remux (passo 3) sem republicar o vídeo — decisão do Álvaro
@@ -551,7 +604,7 @@ python3 estudio.py qa    <slug>      # UM portão: legenda + imagem
 | `morto` | luz < 14 **e** detalhe < 16 | bloco ≥ 1,0 s, ou > 1 % do vídeo |
 | `quase-morto` | luz < 24 e detalhe < 22 | > 5 % |
 | `congelado` | diferença entre vizinhos < 0,8 por ≥ 1 s | > 6 % |
-| `página` | branco (>210) sem cor (sat < 0,12) em > 55 % do quadro | > 0,5 s |
+| `página` | branco (>210) sem cor (sat < 0,12) em > 55 % do quadro, em corrida contígua | > 0,5 s sustentado |
 | `reuso` | hash igual (≤ 6 bits) a > 8 s, **com persistência** | avisa |
 | `descontinuidades` | `scene` do FFmpeg > 0,35 | avisa se faixa < 2,6× |
 
@@ -575,6 +628,13 @@ o número é só o índice dela.**
   `descontinuidades`, não `planos` — **não case esse número com a contagem do render.**
 - ⭐ **Reuso exige persistência.** Sem exigir que o vizinho de 0,5 s também case, o `hakari`
   acusava **186** reusos; com ela, **13** — e os 13 são reais.
+- 🔴 **Página clara também exige persistência.** Somar quadros claros isolados fabrica um
+  bloco que nunca existiu: no Naruto, quatro amostras espalhadas de uma cena colorida da
+  Konan somavam 0,67 s, reprovavam o master e imprimiam uma lista de intervalos vazia.
+  `pagina_s` agora soma só corridas contíguas ≥ 0,5 s; `pagina_candidata_s` mantém a
+  telemetria bruta. Se não há intervalo sustentado, não há reprovação. Mesmo sustentado,
+  confira o quadro: céu, neve e fundo branco de anime não viram mangá só pela luminância.
+  Método e regressão: [references/qa-imagem.md](references/qa-imagem.md).
 - 🔴 **`ffmpeg -ss` ANTES do `-i` zera o relógio que o filtro `subtitles` lê** e a legenda
   some do quadro **sem erro nenhum**. Para conferir legenda num instante: `-copyts -ss <t> -i`.
 
@@ -717,6 +777,48 @@ transição, vários whips do Inosuke eram indistinguíveis de corte. Vire **3 q
 etapas** (`boxblur` raio 104 nos 2 primeiros, 46 no terceiro). Aí lê como chicote sem virar
 o `hblur` ilegível do §4b.
 
+## 4h-bis. 🔴 A borda do plano e o plano repetido de outra fonte *(Doma, 14/09/2026)*
+
+**a. Corte interno da fonte vira lampejo na borda.** O primeiro master do Doma tinha **~20
+planos abrindo ou fechando com 2–10 quadros de outra cena** e **terminava 1,8 s no olho da
+máscara do Inosuke**: `paneu_limpo@110,4` pedia 4,5 s, mas a fonte (edit/compilado) corta aos
+2,67 s. A folha dos meios não vê a borda, a folha a 1–2 q/s cai entre os quadros, e o
+validador só olhava limite, janela proibida e reuso. O conserto é **mapa de cortes dentro do
+validador** — peças reaproveitáveis em `projetos/doma/`:
+
+| Peça | O que faz |
+| :--- | :--- |
+| `cortes_fontes_doma.py` | corte seco por fonte (`select='gt(scene,0.30)'` a 320 px) → `cortes_fontes.json` |
+| `graduais_fontes_doma.py` | 🔴 **fusão (dissolve), que o `scene` não vê**: pico de \|q(t) − q(t−8)\| em 64×36 cinza ≥ 28 → `graduais_fontes.json`. Na kotoha, mão → olho do Inosuke não tinha corte nenhum no mapa seco |
+| `render_doma.py validar` | reprova corte a **< 0,34 s** da borda da janela (já convertida pela rampa) e **sugere** o `de` limpo mais próximo (±0,6 s, dentro do limite, fora das proibidas) |
+| `bordas_fonte_doma.py N …` | faixa a taxa cheia em volta das bordas: separa corte de verdade de **clarão de luta** (a `paneu_limpo` dispara 761 "cortes") |
+| `IGNORA_CORTE` | só entra clarão **olhado a taxa cheia**, com o motivo escrito |
+| `qa_doma.py lock` → `bordas_*.jpg` | primeiro e último quadro de cada plano, em folha: a prova visual |
+
+🔴 **A sugestão não sabe o que vem depois do corte.** No `KT@2,0` ela empurrou a janela para o
+outro lado de uma fusão e deixou **0,37 s do olho do Inosuke no fim** de um plano da mãe —
+"limpo", porque o corte ficou no miolo. Confira toda sugestão que atravessa um corte.
+Plano de câmera curto demais para o verso: rampa **`lenta` (1,7×)** de `ferramentas/efeitos.py`
+(ver `references/composicao-criativa.md`).
+
+**b. O mesmo plano de câmera vindo de DUAS fontes.** O §4h-a já avisava de enquadramento
+repetido com janela diferente; no Doma veio o caso pior: **duas fontes com o mesmo plano**
+(`new_best@20,3` = `cena_lua2d@12,3`) e a `cena_lua2` **repetindo trecho por dentro**
+(48 s = 122 s). Três passadas da folha dos meios pegaram três pares — o último (lanças de gelo
+a 193 s e 200 s) só no terceiro lock. Para trocar, gere `indice_fontes_doma.py <fonte> [ini fim]`:
+1 quadro/s com as janelas **já usadas marcadas em vermelho**.
+⚠️ **Índice com `-ss` + `fps=1` rotula errado em 0,5–1 s.** A verdade é um `-ss` exato por
+quadro — é o que a composição usa.
+
+**c. Folha que não voltou não foi auditada.** A fonte `new_s2` entrou "limpa" e o lock saiu com
+**`TWIXTOR DOWNLOAD LINK IN DESCRIPTION / SORRY FOR NO PREVIEW`** em 4 planos: a folha dela
+tinha voltado `[media removed]` e ninguém percebeu. Pack de twixtor **intercala cartela no MEIO
+do arquivo**. Peça no máximo ~8 imagens por resposta e releia qualquer `media removed`.
+
+**d. Rótulo em cima do quadro esconde a legenda de topo.** A tarja de tempo das folhas cobria
+"…HOS DE ARCO-ÍRIS" no master. `qa_doma.py` passou a escrever o rótulo numa faixa **acima** do
+quadro.
+
 ## 4i. 🔴 O motor de efeitos é `ferramentas/efeitos.py` — não copie render *(12/09/2026)*
 
 **A doença dos scripts descartáveis tinha um terceiro surto, no render.** A regra
@@ -837,15 +939,207 @@ personagem**. Referências são inspiração, não modelos para reproduzir nem m
 obrigatórias de cor, quantidade de efeitos ou fps.
 
 Leia [references/composicao-criativa.md](references/composicao-criativa.md) ao
-planejar quadrinhos, texturas, partículas, cartelas e combinações de efeitos.
+planejar quadrinhos, texturas, partículas, cartelas, montagem e combinações de efeitos.
 Use `estudio.py compor` para uma proposta inicial e revise as receitas com intenção
 narrativa; o léxico é heurístico e não substitui a escolha da IA. Use
 `estudio.py render-composicao` para renderizar as peças revisadas com duração exata.
-Os módulos comuns são `camadas.py` e `composicao.py`; amplie-os para novas ideias.
-Transições entre peças e o áudio continuam na montagem final. Inspecione o vídeo
-codificado ao longo do tempo; uma folha de PNGs não comprova animação.
+Use `estudio.py montar-composicao` para montar a sequência completa com transições
+A→B de linha do tempo fixa (29 tipos no catálogo: `match`, `whip`, `zoom`, `diss`,
+`flash`, `impact_frame`, `impact_color`, `negativo`, `rgb_split`, `lamina`, `tinta`,
+`fumaca`, `energia`, `painel`, etc.), preservando os cortes milimétricos na batida
+sem alterar a duração ou o sincronismo do áudio e legendas. Momentos de respiro ou
+blackout intencional com letra são protegidos via `"vazios_declarados"` no manifesto,
+evitando falso-positivo no porteiro de imagem.
+Os módulos comuns são `camadas.py`, `composicao.py`, `montagem.py` e `imagem.py`;
+amplie-os para novas ideias. Valide regressões com `provar_efeitos.py`, `provar_composicao.py`
+e `provar_montagem.py` (150 provas automáticas). Inspecione o vídeo codificado ao
+longo do tempo; uma folha de PNGs não comprova animação.
+
+## 4l. 🔴 Legenda palavra por palavra: `ferramentas/legenda_cinetica.py` *(Naruto v4, 16/09/2026)*
+
+Projeto de referência: `projetos/naruto-monstro/gerar_legenda_v4.py`. Detalhe e números no
+vault, `02-projetos/pipeline-amv-geek.md` §39, e em `projetos/naruto-monstro/RELATORIO_V4.md`.
+
+**Nunca reescreva a linha acumulada a cada palavra.** A legenda das 11:30 do Naruto remaster
+(`gerar_legenda_palavras.py`) fazia um evento por palavra com o texto ACUMULADO e `\an5`
+centralizado: a linha pulava 58–196 px a cada palavra e, com tempo mal casado, desenhava dois
+textos um sobre o outro — 17 pontos com "EU FIEU FIZ A MINHAÓRIA", inclusive os três "VIROU O
+DESTINO". **A prévia 9:16 publicada nas 3 redes saiu desse master.**
+
+O jeito certo:
+- **Posição de cada palavra medida no próprio libass**: a fileira inteira com só aquela palavra
+  visível (as outras em `\alpha&HFF&`) dá o centro da tinta; a palavra sozinha em `\an5` dá o
+  desvio âncora→tinta. Erro ≤ 1 px, ~1300 medidas em ~10 s.
+- Com a posição travada, **cada palavra tem entrada própria** (pop, giro, foco) em torno do
+  próprio centro. Zoom lento da linha = `\move` + `\t(\fscx)` lineares na mesma função.
+- 🔴 **Pop só na ALTURA** (`pop_x` 0,06–0,12). Com o pop igual nos dois eixos a palavra que chega
+  invade a vizinha ("NARUTCUZUMAKI", "ESSICHAKRA!", "OMUNDO"). Pego só na folha do master.
+- Camadas por palavra, **todas com a mesma animação**: faixa de leitura (só em fundo claro) ·
+  sombra macia (`\bord+7\blur16`) · halo da cor só no destaque · texto com contorno intacto.
+- Quebra em 2 fileiras pela largura **medida** (margem segura 1560 px), com castigo para fileira
+  que termina em palavra fraca ("ATÉ", "DO", "A").
+- Destaque vira o plano B (azul `#5AC8FF` no Naruto) quando mais de 25 % da fileira cai sobre a
+  cor da aura/pele. Títulos e gritos no terço de baixo (y≈780): no centro cobriam a boca da Kurama.
+- **Palavra = o que está entre espaços na letra**: `TÔ <<CERTO>>!` são 2 palavras.
+
+**Por que a legenda antiga sobrepunha texto** (para não repetir): o alinhamento por programação
+dinâmica **copiava o tempo de outra palavra** (79 trocas forçadas) e a interpolação **voltava no
+tempo**; 37 eventos tinham ≤ 3 quadros (tremida). Verso com maiúscula de 42 px, contorno de 4 px
+sem blur e sem sombra some no celular.
+
+**A receita medida** (`legenda_cinetica.py` + estilos em `gerar_legenda_v4.py`):
+
+| item | valor que funcionou |
+|---|---|
+| largura útil | 1560 px (margem segura de 180 px); não coube em 2 fileiras → corpo −5 % e mede de novo |
+| conferência da medida | as duas larguras (fileira × palavra) batem em ±3 px, senão **aborta** |
+| evento | um por palavra, do instante cantado até o fim da linha |
+| faixa de leitura | degradê escuro só nos blocos com fundo claro (luz p75 > 115), blocos próximos unidos (não pisca) |
+| sombra | `\bord+7 \blur16`, 70 % de opacidade |
+| halo do destaque | acende em alpha 18 no instante cantado e assenta em 90; o destaque entra branco e vira a cor em 220 ms |
+| contorno | +1,2 px quando o fundo é claro |
+| lugar | cantado no rodapé (y 966; 2 fileiras sobem) · Título/Grito em y 780, e só sobem ao centro (y 560) se lá o detalhe for < 60 % |
+| cor | plano B (azul `#5AC8FF`) quando > 25 % da fileira cai sobre laranja/pele (matiz 8–50°, sat > 0,38) |
+| tempo | a linha entra 80 ms antes da 1ª palavra e sai 40 ms antes da próxima; se a próxima está colada, ela atrasa até 120 ms para a última palavra ficar ≥ 0,28 s |
+
+| estilo | corpo | entrada | extra |
+|---|---|---|---|
+| Fala | 80 | foco 7→0,6 em 220 ms, 94→100 %, sobe 10 px | creme `#F4E9D8`, sai devagar |
+| Verso | 84 | pop 140→100 % na altura, foco 8, sobe 16 px | — |
+| Refrão | 92 | pop 145→95→100 % | zoom 2 % |
+| Punch | 102 | pop 170→94→102→100 %, giro −8→2→0° | zoom 3 % |
+| Grito | 146 | pop 220→92→104→100 %, giro −6→4→−2→0° | zoom 4 %, halo largo, terço de baixo |
+| Título | 138 | pop 190→100 % em 260 ms, foco 20→0,6 em 300 ms | zoom 5 %, filete da cor abrindo do centro |
+
+Naruto v4: 70 linhas (49 em 2 fileiras, 36 com destaque azul), 1305 eventos, 16 blocos com faixa.
+
+**O relógio por palavra.** `linhas.json` (alinhamento forçado) tem a **1ª palavra de cada linha
+PINADA** no começo da janela (mediana +0,68 s, até 1,5 s adiantada) — e o `construir.py` usava
+esse número para cortar as linhas. `whisper_words.json` estava ~140 ms atrasado. Use o relógio
+medido (`letra/tempos_v4.json`, de `letra/medir_tempos_v4.py`): da 2ª palavra em diante o
+alinhamento forçado; a 1ª = o mais cedo entre a recomendação e a mediana dos candidatos.
+Candidatos da 1ª palavra: ataque do envelope do vocal, `palavras_vocal`, `whisper_full`,
+`whisper_words` − 0,14 s e o modelo por sílaba. No Naruto: 47 linhas ok, 21 pela mediana, 2 à mão.
+**Correção manual só quando as três outras fontes concordam a < 0,25 s** (6 palavras: DESTRÓI, CÊ,
+FALA, CHAVE, O/HERDEIRO — tabela em `projetos/naruto-monstro/RELATORIO_V4.md` §3.4).
+⚠️ Whisper large-v3 **por recorte** custa ~1 min por linha no acer. Nas 12 linhas medidas achou a
+palavra em 9, mas só 2 ficaram a ≤ 0,12 s da recomendação (em 5 caiu 0,17–0,48 s mais cedo —
+plausível como respiro antes da palavra): **não é árbitro**, entra só como mais um candidato na
+mediana (`WHISPER_V4`). E o portão aprovado (+30 ms) é **média**: não prova linha por linha.
+
+**Portão de sincronia da legenda por palavra: `python3 estudio.py sincronia-palavra <slug>`**
+(promovido em 17/09 do `qa_v4.py` do projeto; `ferramentas/sincronia_palavra.py`). O
+`estudio.py sincronia` lê cada evento como LINHA e reprova legenda palavra por palavra à toa — e
+o `estudio.py qa` agora **detecta sozinho** a legenda do `legenda_cinetica.py` e usa o portão
+certo. Ele mede o fluxo espectral do vocal isolado em volta do instante em que cada palavra
+aparece e **traz o controle positivo embutido**: a mesma legenda deslocada +150 ms e −250 ms tem
+de reprovar, senão o veredito é INCONCLUSIVO (rc 2). `--ass`, `--vocal` e `--controle` para
+trocar as entradas. Naruto v4: **+30 ms APROVADO**; controles −120/−200 ms; legenda das 11:30
++200 ms.
+- 🔴 Janela de **±0,20 s**: a voz ataca a cada ~0,25 s e, com ±0,40 s, o argmax pula de sílaba
+  (o controle atrasado 150 ms saía "+290 ms").
+- Controle positivo obrigatório: a mesma legenda deslocada para os dois lados.
+- Controles medidos: legenda das 11:30 = +200 ms; v4 deslocada +150 ms → −110 ms e −250 ms →
+  −200 ms, as duas reprovadas.
+
+**Reproduzir uma legenda assim** (ordem e custo no acer):
+
+```bash
+cd ~/Documentos/Video_Studio/projetos/naruto-monstro
+/home/acer/.venv_whisper/bin/python letra/medir_tempos_v4.py   # relógio por palavra
+python3 construir.py --checar                                  # EDL + efeitos, sem gravar plano
+python3 render.py tudo      # lock ~33 min -> legenda ~1 min -> master ~6 min -> zap ~5 min
+cd ../../ferramentas && python3 estudio.py qa naruto-monstro   # sincronia-palavra + imagem
+```
+
+- 🔴 **Passe `--arquivo <lock>` aos portões** (`imagem`, `transicao`, `texto`, `estilo`) quando o
+  lock tiver nome fora do padrão. Até 17/09 o `_lock_do_projeto` só achava `*picture_lock*`,
+  `*amv_puro*` e `*montagem*`, e o portão media o **master com a legenda queimada**. Desde
+  17/09 ele também acha `*_lock.mp4`/`*_lock_v*.mp4`.
+- A folha que prova a legenda é a do **master em 1080p nativo**: entrada + linha cheia de cada
+  linha (`qa/v4_master/legenda_*.jpg`), olhando colisão entre palavras.
+
+## 4m. Efeitos que o plano já aceita e ninguém ligava *(Naruto v4, 16/09/2026)*
+
+O `plano.json` do remaster tinha **0 camadas**, só 6 dos 29 tipos de transição e aberração de 2
+quadros (invisível). Tudo abaixo é **chave de plano** do motor (`efeitos.py`/`composicao.py`),
+sem código novo — ver `projetos/naruto-monstro/construir.py`, funções `efeitos_v4` e `rampa_v4`.
+
+- **Tremor de DISPARO ÚNICO no hit**: `batida = {"t0": t0, "fase": t0, "periodo": 999,
+  "amplitude": 0.05, "tremor": true, "ax": 48, "ay": 32}` — o `mod` usa floor e nunca volta.
+  O envelope é `exp(-24·t)`: com `ax` 22 o tranco dá 4 px (nada).
+  ⚠️ `ay` ≤ margem vertical do zoom (z 1,08 deixa só 40 px); a `amplitude` soma zoom no mesmo instante.
+- **Pulso na CAIXA, não na grade de corte**: a caixa bateu +56 ms depois da fase de corte (286
+  batidas medidas); o pulso chegava ao máximo 1,7 quadro antes do golpe.
+- **Camadas**: `raios` nos hits do refrão · `onda_choque` na cor da aura nas palavras de poder ·
+  `particulas` de brasa com `trajetoria` (anima de verdade; custa ~+15 s por peça).
+- **Transições tipadas**: `impact_color` (MODO SENNIN), `impact_frame` (quadro P&B de mangá —
+  RECUAR, SHINRA TENSEI), `rgb_split`, `lamina_dir`, `zoom`. Conferir cada uma em folha.
+- 🔴 Regra por "primeiro plano do segmento" precisa do **índice** do plano no segmento — casar só
+  por "sem @palavra" aplicou zoom e `impact_color` em dobro.
+- Mudar o tempo de voz dos segmentos muda a duração dos planos: 3 planos-fonte ficaram curtos e
+  uma janela passou a se repetir. `construir --checar` pega. O conserto é plano extra do catálogo
+  ou `pos=`, **nunca trocar a imagem escolhida**.
+- Mudou a grade de cor? **Rode `imagem` de novo**: com a cor nova um plano escuro (`jp:065`, luz
+  24) virou 1 s de tela morta e foi trocado pelo mesmo momento com o rosto visível (`jp:066`).
+
+| | remaster 11:37 | v4 |
+|---|---|---|
+| voz dos segmentos | `linhas.json["ini"]` (~0,7 s adiantado) | `letra/tempos_v4.json` |
+| camadas | 0 | 37 planos: `raios` 17 · `onda_choque` 13 · brasa 12 (≥ 5 planos de distância) |
+| transições não-secas | 29 | 35, com **teto de 12/min no validador** |
+| pulso de batida | fase de corte, 0,009/0,018 | fase da caixa, 0,015 (verso, gancho, ponte) / 0,030 (refrão, build, título) |
+| tremor | 16 planos, ax 8 / ay 6 | 44 periódicos (ax 10 / ay 12) + 43 disparos únicos (ax 48–60 / ay 32–40) |
+| aberração | 2 quadros / 7 px | 0,12 s / 14 px no refrão · 0,08 s / 9 px no verso · 2 quadros em cima de whip |
+| rampas | 29 impacto + 3 freia | 42 impacto (hits ≥ 0,40 s no refrão) · 11 freia (títulos) · 2 arranque · 12 lenta |
+| grade | luz +0,03 · calor 0,62 · vermelho 0,07 · bloom 0,14 · vinheta tênue | luz −0,04 · calor 0,35 · vermelho 0,10 · bloom 0,20 · vinheta leve |
+
+Régua (`estudio.py estilo`): 55,9 cortes/min, plano mediano 1,0 s, luz média 122 → 108, preto
+10,2 → 13,6 %. O desvio de azul (−20,7 %) é o laranja da fonte: `calor` não move esse número.
+O `transicao` reprovou 5 apagões > 0,6 s que são planos do próprio anime (conferidos na folha) —
+as referências da RM RAPS reprovariam também (48 e 37/min). ⏭️ O portão precisa aceitar
+`vazios_declarados` ou olhar a variação temporal.
+
+## 4m-bis. ⭐ A v4 do Naruto é o PADRÃO aprovado *(Álvaro, 17/09/2026: "ficou muito boa")*
+
+Faixa nova já nasce assim: relógio por palavra → efeitos por chave de plano → amostra de um
+refrão → lock → legenda cinética → portões → `publicar.py whatsapp`. A ordem, o que dá a cara
+da v4 e o que ainda mora só no projeto estão no vault, `pipeline-amv-geek.md` §41. Duas
+iterações foram descartadas antes da boa (v4a: marca d'água + tela morta com a cor nova; v4b:
+pop invadindo a vizinha + uma linha 1 s adiantada) — **olhe as folhas do master antes de
+entregar**, os números sozinhos aprovavam as duas.
+
+## 4n. 🔴 Marca d'água no CANTO DE CIMA passou por todas as auditorias *(Naruto v4, 16/09/2026)*
+
+Duas marcas estavam no master do remaster **e na prévia publicada**: "YELLOW FLASH KING"
+(`kcm_alianca`, canto superior esquerdo, x 30–490 / y 25–82) e o logo "TV TOKYO" (`jiraiya_pack`
+032, canto superior direito). Só a varredura **`estudio.py texto <slug> --faixa alto`** mostrou.
+Conserto por plano, sem trocar a imagem: `rec=0.05,0.10,0.95,1` em todo plano `kc:*` e
+`rec=0,0.14,0.86,1` no `jiraiya_pack`. **Rode as duas faixas do `texto` em todo lock** — a de
+baixo pega fansub, a de cima pega marca de canal e nome de técnica.
 
 ## 5. Estado das faixas
+
+🔴 **A fonte da verdade é o manifesto, não esta seção:** `python3 estudio.py estado` lê o
+`projetos/<slug>/projeto.json` de cada faixa. A tabela abaixo é histórica (até 14/09) e já
+estava errada quando foi revisada: Akaza, Inosuke e Doma aparecem como "não publicado" e
+faltam Yoriichi, Zoro, Kokushibo, Sung, Shinobu, Asta e Naruto.
+
+**Foto de `estudio.py estado` em 16/09/2026:** publicados — akaza, hakari, inosuke, kashimo,
+kokushibo, mahoraga, muzan, rengoku, sangue-explosivo, shinobu, sukuna, toji, yoriichi, zoro,
+sung (longo; cortes aguardando). Não publicados — asta, doma, naruto (Pique Narutão V3).
+Só prévia no ar — naruto-monstro. Bloqueado — imensidao-vazio (música reprovada).
+
+⚠️ **Dois projetos de Naruto, duas músicas diferentes:**
+- `projetos/naruto` = **"Pique Narutão"** (V3, 180 s, Hermes-acer, 16/09). Substituiu por ordem
+  do Álvaro o "O Monstro Virou o Destino" que o Codex tinha feito ali em 15/09.
+- `projetos/naruto-monstro` = **"O Monstro Virou o Destino"**, remaster. A versão boa é a **v4**
+  (`saidas/naruto_o_monstro_virou_o_destino_v4_master_1080p.mp4`, §4l–§4n). A prévia 9:16
+  publicada em 16/09 saiu do master das 11:37, que tem a legenda que pula e duas marcas d'água.
+  Refazer a prévia a partir da v4 é decisão do Álvaro.
+- Os estados do manifesto ainda usam nomes livres (`publicado_todas_redes`,
+  `longo_publicado__cortes_prontos_aguardando_hermes`) — prefira `nao_publicado`,
+  `previa_publicada`, `publicado`, `bloqueado`, `rascunho`.
 
 | Faixa | Versão final | Arquivo |
 | :--- | :--- | :--- |
@@ -855,6 +1149,7 @@ codificado ao longo do tempo; uma folha de PNGs não comprova animação.
 | **Satoru Gojo — Imensidão do Vazio** | **Master v2 02/09/2026 — FECHADO, não publicado** (prévia 9:16 no ar) | `projetos/imensidao-vazio/saidas/imensidao_vazio_gojo_v2_master_1080p.mp4` |
 | **Akaza** (Demon Slayer) | **V6 03/09/2026 — FECHADO, não publicado** | `projetos/akaza/saidas/akaza_amv_v6_master_1080p.mp4` (2:59) |
 | **Inosuke Hashibira — O Deus da Montanha** | **V4 06/09/2026 — FECHADO, não publicado** (prévia 9:16 no ar) | `projetos/inosuke/saidas/inosuke_amv_v4_master_1080p.mp4` (3:42) |
+| **Doma — Lua Superior Dois** | **Master 14/09/2026 — FECHADO, não publicado** (3 locks; §4h-bis) | `projetos/doma/saidas/doma_amv_master_1080p.mp4` (3:57) |
 
 🔴 **Inosuke: use a V4, nunca a V1 nem a V2.** A V1 tem a cartela de crédito do editor
 `@baseking99` aos 17,5 s; a **V2 tem duas legendas em inglês queimadas** (§4f) — e estava
@@ -884,16 +1179,16 @@ Montar não é entregar. Para subir nas plataformas, use a skill
 
 🔴 **Todo vídeo do YouTube sai com capa própria** (ordem do Álvaro, 01/09/2026).
 Publicar e deixar a miniatura automática não conta como entregue. A capa é
-1280×720, feita de **frame real do próprio vídeo** — nunca arte de IA — e o
-gerador de referência é `ferramentas/artes_muzan.py`.
+1280×720, feita de **frame real do próprio vídeo** — nunca arte de IA — e sai de
+`python3 estudio.py capa <slug>` (primitivas em `ferramentas/artes_base.py`; os antigos
+`artes_<personagem>.py` estão aposentados em `_arquivo_morto/` e não devem ser copiados).
 
 **Confira quem está no frame.** A primeira capa do Muzan usou um frame de Lua
 Superior (cabelo branco, olhos dourados com kanji) achando que era ele. Muzan
 tem cabelo escuro e olho **vermelho**; olho com kanji nunca é ele.
 
-Dois geradores servem de modelo: `ferramentas/artes_muzan.py` e
-`ferramentas/artes_sukuna.py` (este importa as funções daquele — reaproveite em
-vez de duplicar). A composição que funciona é sempre a mesma: personagem de um
+Personagem novo pede **manifesto** (`estudio.py novo <slug>`), não script de arte. A
+composição que funciona é sempre a mesma: personagem de um
 lado, coluna de texto do outro, scrim escuro por baixo do texto, nada no canto
 inferior direito (selo de duração) e conferência no card de 210 px.
 

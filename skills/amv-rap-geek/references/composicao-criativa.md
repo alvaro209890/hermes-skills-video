@@ -31,10 +31,38 @@ renderiza **uma peça silenciosa**, padrão 1920x1080, 30 fps, acompanhada de JS
 tempo da fonte e quantidade de quadros. `--fps 60` está disponível quando o projeto
 pedir. Caminhos relativos de `fonte` são relativos ao JSON.
 
-Transições entre duas peças continuam na montagem que importa `efeitos.XFADE` e
-`efeitos.camada`. O campo `receita.transicao` é registrado como metadado: não é
-aplicado como fade isolado na peça. A música e o `.ass` entram na montagem final.
-Mudar receitas não altera automaticamente masters antigos ou vídeos publicados.
+`ferramentas/estudio.py montar-composicao propostas.json --saida montagem.mp4`
+monta todas as peças do JSON com o motor de transições A→B (`ferramentas/montagem.py`).
+A linha do tempo e a duração total permanecem rigorosamente intactas: as transições
+operam exclusivamente substituindo quadros ao redor do corte (`inicio_planos`), sem
+adiantar nem atrasar o beat ou o arquivo de legendas `.ass`.
+
+Transições disponíveis (29 no catálogo):
+- Cortes e continuidade: `corte`, `match` (continuidade de pose)
+- Dissoluções: `diss`, `dissl` (varredura esquerda), `dissr` (varredura direita), `dissw` (flash branco tênue), `dissb` (blur dinâmico)
+- Geométricas e radiais: `circulo`, `radial`, `lamina_dir`, `lamina_esq`
+- Dinâmicas e camera: `whip`, `whip_dir`, `whip_esq`, `whip_cima`, `whip_baixo`, `zoom`
+- Impacto, sakuga e luz:
+  - `impact_frame`: quadro sakuga binarizado em P&B com contraste extremo (std > 90) e microtremor de colisão
+  - `impact_color`: o mesmo impact frame com explosão na cor da aura do personagem
+  - `negativo`: flash negativo/invertido de 3 frames para golpes de espada / corte invisível
+  - `rgb_split`: deslocamento cromático entre canais R e B no pico da transição
+  - `flash`, `flashc` (aura ciano/colorida), `flashr` (vermelho), `dip` (fade escuro)
+- Orgânicas e temáticas: `tinta` (sangue/veneno), `fumaca` (sombra), `energia` (fogo/raio), `painel` (zoom em quadrinho)
+
+A escolha da transição em `composicao.escolher_transicao` considera continuidade de movimento
+anotada (`whip_<direcao>`), pose correspondente (`match`), papel da cena (seção de respiro
+como ponte/outro escolhe `diss`), família do personagem e proteção de alta luminosidade
+(evita flash em cenas muito claras). As transições usam foco visual normalizado `[x, y]`.
+As partículas suportam animação individualizada por sprite com rotação e fase (`particulas_animadas`).
+
+## Vazio Declarado (Blackout Intencional)
+
+A referência do RM RAPS usa frequentemente momentos de silêncio visual (telas escuras de 1 a 2 s
+com somente a letra da música no centro da tela antes de um drop ou virada dramática).
+Para que o porteiro de integridade (`imagem.py`) não reprove o master por "tela morta acidental",
+declare os intervalos no manifesto `projeto.json` em `"vazios_declarados": [[inicio_s, fim_s], ...]`.
+O validador ignora os blocos declarados e protege contra telas pretas acidentais de render.
 
 ## Entrada mínima
 
@@ -113,3 +141,11 @@ do plano. A tipografia de cartela usa Rubik Distressed; a legenda continua Cinze
 
 Implementação e validação: Codex, 12/09/2026, retomando a sessão Claude
 `cc0e2420-046e-458d-b051-ef3655019da1`.
+
+## Rampa `lenta` *(Doma, 14/09/2026)*
+
+`efeitos.RAMPA["lenta"] = (1.70, 1.70)`: câmera lenta constante. Serve quando o plano de câmera
+limpo da fonte é **mais curto que o verso** e a borda cairia num corte interno da fonte
+(SKILL §4h-bis). A janela de fonte vira `dur / 1,7`; no validador do projeto,
+`RAMPA_K["lenta"] = 3,40` (a soma k0 + k1). Usada nos planos da Kotoha, cujos planos de câmera
+têm ~1 s.

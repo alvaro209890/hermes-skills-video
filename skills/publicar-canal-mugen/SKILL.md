@@ -502,6 +502,18 @@ const livre = alvo === topo || alvo.contains(topo) || topo.contains(alvo);
 4. Registre no Segundo Cérebro (`02-projetos/pipeline-amv-geek.md`) e no
    `06-changelog.md`.
 
+## Entregar no WhatsApp do Álvaro *(16/09/2026)*
+
+```bash
+python3 publicar.py whatsapp ARQ --legenda "O que é e o que mudou" --recibo projetos/<slug>/qa/whatsapp_receipt_<data>.json
+```
+
+- Destino **fixo** no WhatsApp pessoal do Álvaro. Terceiro nunca recebe pelo chip do Hermes
+  (roteamento de 05/09/2026, AGENTS.md do vault).
+- Confere o `/health` do bridge, grava hash e recibo. `success=true` prova envio, não leitura.
+- Arquivo acima de **~55 MB** engasga o bridge: gere a versão leve (CRF 29 / 1700k, trilha do WAV).
+- Não crie `enviar_whatsapp_<coisa>.py`: conserte este subcomando.
+
 ## Contas
 
 | Plataforma | Conta |
