@@ -145,6 +145,46 @@ cp -r hermes-skills-video/skills/video-* ~/.hermes/skills/
 O `doctor.sh` dirá o que falta. **Ele não instala nada de propósito** — quem decide instalar é
 uma pessoa.
 
+## Frota a partir da nuvem
+
+Uma sessão do Claude Code na nuvem entra na tailnet como nó efêmero (`claude-nuvem`) e chega
+no acer por `ssh acer`, via [`scripts/conectar-frota.sh`](scripts/conectar-frota.sh). O
+container só sai por um proxy HTTPS, então o tráfego vai pelos relays DERP — mais lento que
+a rede local; para puxar clipe grande, prefira `rsync -z` e só o que o job precisa.
+
+Uma vez só, no **acer**:
+
+```bash
+ssh-keygen -t ed25519 -N "" -C claude-nuvem -f ~/.ssh/claude_nuvem
+cat ~/.ssh/claude_nuvem.pub >> ~/.ssh/authorized_keys
+base64 -w0 ~/.ssh/claude_nuvem; echo   # vai para FROTA_SSH_KEY_B64; depois: rm ~/.ssh/claude_nuvem
+```
+
+No **painel do Tailscale**:
+
+1. Política de acesso — o nó da nuvem só enxerga a porta 22 do acer (troque pelo IP 100.x dele):
+   ```json
+   "tagOwners": { "tag:claude-nuvem": ["autogroup:admin"] },
+   "hosts":     { "acer": "100.x.y.z" },
+   "grants":    [ { "src": ["tag:claude-nuvem"], "dst": ["acer"], "ip": ["tcp:22"] } ]
+   ```
+   ⚠️ Se a política ainda tem a regra padrão `*` → `*`, ela vale para o nó tagueado também:
+   restrinja antes, senão a nuvem enxerga a frota inteira.
+2. *Settings → Keys → Generate auth key*: **Reusable**, **Ephemeral**, **Pre-approved**,
+   tag `tag:claude-nuvem`. Reutilizável porque cada sessão é um container novo.
+
+No **ambiente da nuvem** (menu do ambiente na barra de título da sessão → *Edit*):
+
+| Campo | Valor |
+|---|---|
+| Environment variables | `TS_AUTHKEY` (a auth key) e `FROTA_SSH_KEY_B64` (a saída do `base64`) |
+| Network access | liberar `*.tailscale.com` |
+| Setup script | `apt-get update && apt-get install -y openssh-client rsync ffmpeg` |
+
+Variável nova só vale em **sessão nova**. Nela: `scripts/conectar-frota.sh`, depois
+`ssh acer 'hostname && nproc'`. Revogar: apagar a linha `claude-nuvem` do
+`~/.ssh/authorized_keys` do acer e a auth key no painel.
+
 ## Estrutura
 
 ```
@@ -154,6 +194,7 @@ skills/
 ├── video-criacao/    voz rap · animação · grade · validação · recipes
 └── video-dublagem/   doctor por perfil · encaixe/QA · sincronia
 examples/gojo-v3/     scripts e textos do caso validado, sem mídia protegida
+scripts/              validate_repo.py · conectar-frota.sh (sessão na nuvem → frota)
 ```
 
 Sem segredos, sem credenciais: o `doctor.sh` verifica apenas a **presença** de variáveis de
