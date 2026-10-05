@@ -1,7 +1,24 @@
 # hermes-skills-video
 
-Três skills de vídeo para o **Hermes** — o assistente que o Álvaro opera **pelo WhatsApp** —
-mais o planejamento completo que as originou.
+Skills de vídeo para o **Hermes**, com planejamento, scripts e validação.
+
+## Opinião e humor sobre vídeos recebidos — 2026-10-05
+
+A nova [`video-opiniao-rapida`](skills/video-opiniao-rapida/) orienta a análise de
+um anexo antes de emitir opinião ou fazer uma piada. O motor envia quadros
+amostrados e áudio em uma única chamada multimodal, separa observação de opinião
+e informa a cobertura usada. Não presume que enviar um MP4 diretamente ao
+provedor significa que ele foi interpretado corretamente.
+
+O motor aceita até 50 MB, usa até 16 quadros e os primeiros 60 segundos de áudio;
+mantém cache de dez minutos para a mesma mídia e pergunta. O teste real de um
+edit de 13,5 segundos confirmou conteúdo, crítica à montagem e humor, com o
+agente principal chamando a ferramenta protegida. Esse teste não estabelece
+um prazo universal nem precisão de sincronia quadro a quadro. A integração deve
+fornecer `analisar_video` e controlar acesso ao arquivo da pessoa atual; a skill
+sozinha não concede acesso a ferramentas, credenciais ou outras pessoas.
+
+As três skills originais e seu planejamento continuam abaixo.
 
 O caso de ouro: *"vi um Reel no celular, mandei o link, o vídeo chegou pronto"*.
 
